@@ -1,0 +1,433 @@
+---
+title: "Single_Cell_Analysis"
+author: "Ankit"
+format: html
+---
+
+Single Cell playlist: **https://youtube.com/playlist?list=PLJefJsd1yfhagnkss5B1YCsHaH0GWQfFT&si=WJP-9crCwI6c1eoV**
+
+## Difference between bulk and single-cell RNA-seq data analysis
+
+Bulk RNA-seq provides an average expression profile for each gene across a population of cells, while single-cell RNA-seq captures the expression profile of individual cells, allowing for the study of cellular heterogeneity
+
+## Basic terminology:
+
+1.  **UMI (Unique Molecular Identifier):** A short sequence added to each RNA molecule before amplification to uniquely tag it, allowing for the correction of amplification biases and more accurate quantification of gene expression
+2.  **Features:** Genes
+3.  **Barcodes:** Short DNA barcode 'tags' to identify reads that originate from the same cell
+4.  **Count Matrix / Feature-Barcode Matrix:** A matrix where rows represent genes (features) and columns represent cells (barcodes), with each entry indicating the number of transcripts (counts) detected for a given gene in a specific cell
+5.  **Doublets:** Instances where two or more cells are captured together
+
+## Different single-cell RNA sequencing technologies exist.
+
+They differ in terms of transcript coverage (full-length vs 3' or 5' end), UMI possibility, strand specificity, throughput (number of cells), and cost.
+
+## Seurat object structure:
+
+1.  **Assays:** Store the count data (e.g., RNA, SCT)
+2.  **Metadata:** Contains information about the cells (e.g., cell type, experimental conditions)
+3.  **Reductions:** Store dimensionality reduction results (e.g., PCA, UMAP)
+4.  **Graphs:** Store graph-based representations of the data (e.g., nearest neighbor graphs)
+5.  **Commands:** Store the history of commands applied to the object
+
+Feature-Barcode Matrix is a sparse matrix because most genes are not expressed in most cells, leading to many zero entries.
+
+## Different input-data formats exist.
+
+1. **10x hdf5** = .hdf5 
+2. **R data file** = .rds 
+3. **AnnData** = .h5ad 
+4. **Loom** = .loom 
+5. **text based Market Exchange Format** = .mtx
+
+# Script to demonstrate reading single cell matrices in various format and converting to seurat object
+
+```{r, eval=FALSE}
+# load libraries
+# install.packages("Seurat")
+# remotes::install_github("mojaveazure/seurat-disk")
+library(Seurat)
+library(SeuratDisk)
+
+# .RDS format
+rds_obj <- readRDS('ependymal_cells.rds')
+
+# 10X CellRanger .HDF5 format 
+hdf5_obj <- Read10X_h5(filename = "20k_PBMC_3p_HT_nextgem_Chromium_X_filtered_feature_bc_matrix.h5",
+           use.names = TRUE,
+           unique.features = TRUE)
+seurat_hdf5 <- CreateSeuratObject(counts = hdf5_obj)
+
+# .mtx file
+mtx_obj <- ReadMtx(mtx = "raw_feature_bc_matrix/matrix.mtx.gz",
+        features = "raw_feature_bc_matrix/features.tsv.gz",
+        cells = "raw_feature_bc_matrix/barcodes.tsv.gz")
+seurat_mtx <- CreateSeuratObject(counts = mtx_obj)
+
+# .loom files
+loom_oj <- Connect(filename = "adult-hem-organs-10X-bone-marrow.loom", mode = 'r')
+seurat_loom <- as.Seurat(loom_oj)
+
+# .h5ad format 
+# step 1: convert AnnData object to an h5Seurat file
+Convert("adata_SS2_for_download.h5ad", dest = "h5seurat", overwrite = TRUE)
+
+# step 2: Load h5Seurat file into a Seurat object 
+seurat_anndata <- LoadH5Seurat("adata_SS2_for_download.h5seurat")
+```
+
+# Script to perform standard workflow steps to analyze single cell RNA-Seq data
+
+## Data: 20k Mixture of NSCLC DTCs from 7 donors, 3' v3.1
+
+## Data source: https://www.10xgenomics.com/datasets/20-k-mixture-of-nsclc-dt-cs-from-7-donors-3-v-3-1-3-1-standard-6-1-0
+
+```{r, eval=FALSE}
+# load libraries
+library(Seurat)
+library(tidyverse)
+
+# Load the NSCLC dataset
+nsclc.sparse.m <- Read10X_h5(filename = '20k_NSCLC_DTC_3p_nextgem_Multiplex_count_raw_feature_bc_matrix.h5')
+str(nsclc.sparse.m)
+cts <-  nsclc.sparse.m$`Gene Expression`
+
+# Initialize the Seurat object with the raw (non-normalized data).
+nsclc.seurat.obj <- CreateSeuratObject(counts = cts, project = "NSCLC", min.cells = 3, min.features = 200)
+str(nsclc.seurat.obj)
+nsclc.seurat.obj
+# 29552 features across 42081 samples
+
+# 1. QC -------
+View(nsclc.seurat.obj@meta.data)
+# % MT reads
+# In dying or low-qualiy cells, the proportion of mitochondrial gene transcripts is often elevated.
+nsclc.seurat.obj[["percent.mt"]] <- PercentageFeatureSet(nsclc.seurat.obj, pattern = "^MT-")
+View(nsclc.seurat.obj@meta.data)
+
+VlnPlot(nsclc.seurat.obj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+FeatureScatter(nsclc.seurat.obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA") +
+  geom_smooth(method = 'lm')
+
+# 2. Filtering -----------------
+nsclc.seurat.obj <- subset(nsclc.seurat.obj, subset = nFeature_RNA > 200 & nFeature_RNA < 2500 & 
+                          percent.mt < 5)
+# Other filtering strategies include removing doublets using tools like DoubletFinder
+
+# 3. Normalize data ----------
+#nsclc.seurat.obj <- NormalizeData(nsclc.seurat.obj, normalization.method = "LogNormalize", scale.factor = 10000)
+# OR
+nsclc.seurat.obj <- NormalizeData(nsclc.seurat.obj)
+str(nsclc.seurat.obj)
+
+# 4. Identify highly variable features --------------
+nsclc.seurat.obj <- FindVariableFeatures(nsclc.seurat.obj, selection.method = "vst", nfeatures = 2000)
+
+# Identify the 10 most highly variable genes
+top10 <- head(VariableFeatures(nsclc.seurat.obj), 10)
+
+# plot variable features with and without labels
+plot1 <- VariableFeaturePlot(nsclc.seurat.obj)
+LabelPoints(plot = plot1, points = top10, repel = TRUE)
+
+
+# 5. Scaling -------------
+all.genes <- rownames(nsclc.seurat.obj)
+nsclc.seurat.obj <- ScaleData(nsclc.seurat.obj, features = all.genes)
+
+str(nsclc.seurat.obj)
+
+# 6. Perform Linear dimensionality reduction --------------
+# To understand the sources of variation in the dataset, we run PCA
+nsclc.seurat.obj <- RunPCA(nsclc.seurat.obj, features = VariableFeatures(object = nsclc.seurat.obj))
+
+# visualize PCA results
+print(nsclc.seurat.obj[["pca"]], dims = 1:5, nfeatures = 5)
+DimHeatmap(nsclc.seurat.obj, dims = 1, cells = 500, balanced = TRUE)
+
+# determine dimensionality of the data
+ElbowPlot(nsclc.seurat.obj)
+
+# 7. Clustering ------------
+# dims represent the number of PCs to use which explains the majority of the variance
+nsclc.seurat.obj <- FindNeighbors(nsclc.seurat.obj, dims = 1:15)
+
+# understanding resolution
+# A higher resolution leads to a larger number of clusters, while a lower resolution results in fewer clusters.
+nsclc.seurat.obj <- FindClusters(nsclc.seurat.obj, resolution = c(0, 0.1,0.3, 0.5, 0.7, 1))
+View(nsclc.seurat.obj@meta.data)
+
+DimPlot(nsclc.seurat.obj, group.by = "RNA_snn_res.0.1", label = TRUE)
+
+# setting identity of clusters
+Idents(nsclc.seurat.obj)
+Idents(nsclc.seurat.obj) <- "RNA_snn_res.0.1"
+Idents(nsclc.seurat.obj)
+
+# non-linear dimensionality reduction --------------
+# If you haven't installed UMAP, you can do so via reticulate::py_install(packages = 'umap-learn')
+nsclc.seurat.obj <- RunUMAP(nsclc.seurat.obj, dims = 1:15)
+# note that you can set `label = TRUE` or use the LabelClusters function to help label individual clusters
+DimPlot(nsclc.seurat.obj, reduction = "umap")
+```
+
+# Integrate single-cell RNA-Seq datasets using Seurat (CCA)
+
+## When to integrate?
+1. Integrating multiple scRNA-seq datasets from different conditions, time points, or treatments to compare cellular responses.
+2. Cell label transfer - transfer cell-type annotations from a well-annotated reference dataset to a new dataset.
+3. Integration of multimodal single cell data (e.g. scRNA-seq and scATAC-seq) - integrate into a single-cell multi-omics dataset, signals collected from separate assays.
+4. Integration of spatial transcriptomics data with scRNA-seq data - combine spatial transcriptomics data with scRNA-seq data to map cell types and states to their spatial locations within tissues.
+
+## Types of integration methods:
+1. **Horizontal Integration**
+* Same modality from independent cells.
+* e.g., scRNA-seq from same tissue from different patients/donors/sequencing technologies.
+* Assays are anchored by common gene set.
+
+2. **Vertical Integration**
+* Multiple modalities profiled simultaneously from the same cells.
+* e.g., scRNA-seq and scATAC-seq from same cells.
+* Assays are anchored by cells.
+
+3. **Diagonal Integration**
+* Different modalities from different cells.
+* e.g., scRNA-seq from one set of cells and scATAC-seq from another set of cells.
+
+## Batch correction methods:
+1. MNN (Mutual Nearest Neighbors)
+2. CCA (Canonical Correlation Analysis)
+3. Harmony
+4. LIGER (Linked Inference of Genomic Experimental Relationships)
+5. Scanorama
+6. scVI (single-cell Variational Inference)
+7. BBKNN (Batch Balanced KNN)
+8. Conos
+9. ScMAP
+10. ScALIGN
+11. **Seurat v3 Integration**
+
+## Dataset: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE180665
+## Study Design
+**Goal of the study:** Identification of distinct tumor cell populations and key genetic mechanisms in Hepatoblastoma (HB) through single-cell RNA sequencing.
+**Design:** Samples from human tumor, background liver (tissue adjacent to the tumor) and patient derived xenografts (PDX: tumors extracted from patients and grown in mice) were collected to demonstrate gene expression patterns within tumor and to identify intratumor cell subtype heterogeneity to define differing roles in pathogenesis based on intracellular signaling in pediatric HB.
+**Goal of our analysis:** Integrate multiple scRNA-Seq datasets from different patients and conditions (tumor, background liver, PDX) to correct for batch effects and identify shared cell populations and states across samples.
+
+## Script to integrate scRNA-Seq datasets to correct for batch effects
+
+```{r, eval=FALSE}
+# load libraries
+library(Seurat)
+library(ggplot2)
+library(tidyverse)
+library(gridExtra)
+
+# get data location
+# recursive = F to list only directories in the specified path
+dirs <- list.dirs(path = 'data_integration_seurat_cca/', recursive = F, full.names = F)
+
+for(x in dirs){
+  name <- gsub('_filtered_feature_bc_matrix','', x)
+  
+  cts <- ReadMtx(mtx = paste0('data_integration_seurat_cca/',x,'/matrix.mtx.gz'),
+          features = paste0('data_integration_seurat_cca/',x,'/features.tsv.gz'),
+          cells = paste0('data_integration_seurat_cca/',x,'/barcodes.tsv.gz'))
+  
+  # create seurat objects
+  assign(name, CreateSeuratObject(counts = cts))
+}
+
+# merge datasets (not integration)
+# merge is from Seurat package
+# merging seurat objects allows to perform QC and filtering on the combined dataset
+# ls() lists all objects in the current environment
+
+merged_seurat <- merge(HB17_background, y = c(HB17_PDX, HB17_tumor, HB30_PDX, HB30_tumor, HB53_background,
+                             HB53_tumor),
+      add.cell.ids = ls()[3:9],
+      project = 'HB')
+
+merged_seurat
+
+# QC & filtering -----------------------
+
+View(merged_seurat@meta.data)
+# create a sample column
+merged_seurat$sample <- rownames(merged_seurat@meta.data)
+
+# split sample column
+merged_seurat@meta.data <- separate(merged_seurat@meta.data, col = 'sample', into = c('Patient', 'Type', 'Barcode'), 
+         sep = '_')
+
+# calculate mitochondrial percentage
+merged_seurat$mitoPercent <- PercentageFeatureSet(merged_seurat, pattern='^MT-')
+
+# explore QC
+# filtering
+merged_seurat_filtered <- subset(merged_seurat, subset = nCount_RNA > 800 &
+         nFeature_RNA > 500 &
+         mitoPercent < 10)
+
+merged_seurat_filtered
+merged_seurat
+
+# perform standard workflow steps to figure out if we see any batch effects --------
+merged_seurat_filtered <- NormalizeData(object = merged_seurat_filtered)
+merged_seurat_filtered <- FindVariableFeatures(object = merged_seurat_filtered)
+merged_seurat_filtered <- ScaleData(object = merged_seurat_filtered)
+merged_seurat_filtered <- RunPCA(object = merged_seurat_filtered)
+ElbowPlot(merged_seurat_filtered)
+merged_seurat_filtered <- FindNeighbors(object = merged_seurat_filtered, dims = 1:20)
+merged_seurat_filtered <- FindClusters(object = merged_seurat_filtered)
+merged_seurat_filtered <- RunUMAP(object = merged_seurat_filtered, dims = 1:20)
+
+
+# plot
+p1 <- DimPlot(merged_seurat_filtered, reduction = 'umap', group.by = 'Patient')
+p2 <- DimPlot(merged_seurat_filtered, reduction = 'umap', group.by = 'Type',
+        cols = c('red','green','blue'))
+
+grid.arrange(p1, p2, ncol = 2, nrow = 2)
+# As we can see, there are strong batch effects based on patient and type of sample which resembles technical variation rather than biological variation. The same cell types from different patients do not cluster together. Instead, cells cluster based on patient origin and sample type.
+
+# perform integration to correct for batch effects ------
+obj.list <- SplitObject(merged_seurat_filtered, split.by = 'Patient')
+for(i in 1:length(obj.list)){
+  obj.list[[i]] <- NormalizeData(object = obj.list[[i]])
+  obj.list[[i]] <- FindVariableFeatures(object = obj.list[[i]])
+}
+
+# select integration features
+features <- SelectIntegrationFeatures(object.list = obj.list)
+
+# find integration anchors (CCA)
+# time intensive step
+anchors <- FindIntegrationAnchors(object.list = obj.list,
+                       anchor.features = features)
+
+# integrate data
+seurat.integrated <- IntegrateData(anchorset = anchors)
+
+# Scale data, run PCA and UMAP and visualize integrated data
+seurat.integrated <- ScaleData(object = seurat.integrated)
+seurat.integrated <- RunPCA(object = seurat.integrated)
+seurat.integrated <- RunUMAP(object = seurat.integrated, dims = 1:50)
+
+
+p3 <- DimPlot(seurat.integrated, reduction = 'umap', group.by = 'Patient')
+p4 <- DimPlot(seurat.integrated, reduction = 'umap', group.by = 'Type',
+              cols = c('red','green','blue'))
+
+
+grid.arrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+# After integration and batch correction, cells from different patients and sample types cluster together based on their cell type identities rather than their origin, indicating successful correction of batch effects.
+```
+
+# Detecting doublets in single-cell RNA-Seq data using DoubletFinder
+
+## What are doublets?
+Doublets are instances where two or more cells captured in a single droplet or well during the single-cell RNA sequencing process. This can lead to mixed gene expression profiles that do not accurately represent any individual cell, potentially confounding downstream analyses.
+
+## Homotypic vs Heterotypic doublets
+1. **Homotypic Doublets:** Formed when two cells of the same type are captured together. These doublets are more challenging to detect because their gene expression profiles closely resemble those of individual cells of that type.
+2. **Heterotypic Doublets:** Formed when two cells of different types are captured together. These doublets often exhibit mixed gene expression profiles that are more distinct from individual cell types, making them easier to identify.
+
+## DoubletFinder needs three main parameters to identify doublets:
+1. **pN:** The proportion of artificial doublets to generate. A common default value is 0.25, meaning that 25% of the total number of cells will be used to create artificial doublets.
+2. **pK:** The neighborhood size used in the k-nearest neighbors (kNN) algorithm to identify doublets. This parameter is crucial for optimizing doublet detection and typically requires empirical determination through parameter sweeps.
+3. **nExp:** The expected number of doublets in the dataset. This can be estimated based on the known doublet formation rate of the sequencing platform used (e.g., 7.5% for 10x Genomics).
+
+## How does DoubletFinder work?
+1. DoubletFinder generates artificial doublets by randomly pairing cells from the dataset and averaging their gene expression profiles. This is the pN parameter and the value is typically set to 0.25 as it does not change with different datasets.
+2. The artificial doublets are then merged with the original dataset to create an augmented dataset and the standard pre-processing steps (normalization, scaling, PCA) are performed on this combined dataset.
+3. Performing a dimensionality reduction on the merged real and artificial doublet dataset using PCA. This produces a lower-dimensional representation of the data where the artificial doublets colocalize with potential real doublets.
+4. Detecting doublets using a k-nearest neighbors (kNN) approach. For each cell in the original dataset, DoubletFinder calculates the proportion of its k-nearest neighbors that are artificial doublets. Cells with a high proportion of artificial doublet neighbors are more likely to be real doublets. This step is dependent on the pK parameter.
+5. Classifying cells as singlets or doublets based on the expected number of doublets (nExp). Cells with the highest doublet scores are classified as doublets until the expected number of doublets is reached.
+
+## Strategies for optimal pK selection
+1. **Parameter Sweep:** DoubletFinder provides a function to perform a parameter sweep across a range of pK values. This involves running the doublet detection process multiple times with different pK values and evaluating the results.
+2. **BCmetric Evaluation:** After performing the parameter sweep, DoubletFinder calculates a BCmetric (Bimodality Coefficient metric) for each pK value. The BCmetric quantifies the separation between singlet and doublet populations in the doublet score distribution. A higher BCmetric indicates better separation and, therefore, a more optimal pK value.
+3. **Presence of Ground Truth:** If ground truth doublet annotations are available (e.g., from experimental validation or known cell barcodes), they can be used to directly assess the accuracy of doublet detection at different pK values. The pK that maximizes true positive rate while minimizing false positives can be selected.
+
+## Best practices for using DoubletFinder
+1. DoubletFinder cannot be applied onto aggregated single cell datasets.
+2. Not preferable to run on merged data (different samples may have different proportions of cell types and merged objects can be large in size).
+3. Should be run on distinct samples separately.
+4. Input data should be cleared of low-quality cells.
+5. Remove clusters with low UMIs, high mitochondrial read % and uninformative marker genes.
+
+```{r, eval=FALSE}
+# load libraries
+library(Seurat)
+library(ggplot2)
+library(tidyverse)
+library(DoubletFinder)
+
+# create counts matrix
+cts <- ReadMtx(mtx = '/Users/kr/Desktop/demo/single_cell_doublets/data/raw_feature_bc_matrix/matrix.mtx.gz',
+        features = '/Users/kr/Desktop/demo/single_cell_doublets/data/raw_feature_bc_matrix/features.tsv.gz',
+        cells = '/Users/kr/Desktop/demo/single_cell_doublets/data/raw_feature_bc_matrix/barcodes.tsv.gz')
+
+cts[1:10,1:10]
+
+# create Seurat object
+pbmc.seurat <- CreateSeuratObject(counts = cts)
+str(pbmc.seurat)
+
+# QC and Filtering
+# explore QC
+
+pbmc.seurat$mitoPercent <- PercentageFeatureSet(pbmc.seurat, pattern = '^MT-')
+
+pbmc.seurat.filtered <- subset(pbmc.seurat, subset = nCount_RNA > 800 &
+         nFeature_RNA > 500 &
+         mitoPercent < 10)
+
+pbmc.seurat
+pbmc.seurat.filtered
+
+
+# pre-process standard workflow
+pbmc.seurat.filtered <- NormalizeData(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- FindVariableFeatures(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- ScaleData(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- RunPCA(object = pbmc.seurat.filtered)
+ElbowPlot(pbmc.seurat.filtered)
+pbmc.seurat.filtered <- FindNeighbors(object = pbmc.seurat.filtered, dims = 1:20)
+pbmc.seurat.filtered <- FindClusters(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- RunUMAP(object = pbmc.seurat.filtered, dims = 1:20)
+
+## pK Identification (no ground-truth) ---------------------------------------------------------------------------------------
+sweep.res.list_pbmc <- paramSweep_v3(pbmc.seurat.filtered, PCs = 1:20, sct = FALSE)
+sweep.stats_pbmc <- summarizeSweep(sweep.res.list_pbmc, GT = FALSE)
+bcmvn_pbmc <- find.pK(sweep.stats_pbmc)
+
+ggplot(bcmvn_pbmc, aes(pK, BCmetric, group = 1)) +
+  geom_point() +
+  geom_line()
+
+pK <- bcmvn_pbmc %>% # select the pK that corresponds to max bcmvn to optimize doublet detection
+  filter(BCmetric == max(BCmetric)) %>%
+  select(pK) 
+pK <- as.numeric(as.character(pK[[1]]))
+
+## Homotypic Doublet Proportion Estimate -------------------------------------------------------------------------------------
+annotations <- pbmc.seurat.filtered@meta.data$seurat_clusters
+homotypic.prop <- modelHomotypic(annotations)           ## ex: annotations <- seu_kidney@meta.data$ClusteringResults
+nExp_poi <- round(0.076*nrow(pbmc.seurat.filtered@meta.data))  ## Assuming 7.5% doublet formation rate - tailor for your dataset
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+
+# run doubletFinder 
+pbmc.seurat.filtered <- doubletFinder_v3(pbmc.seurat.filtered, 
+                                     PCs = 1:20, 
+                                     pN = 0.25, 
+                                     pK = pK, 
+                                     nExp = nExp_poi.adj,
+                                     reuse.pANN = FALSE, sct = FALSE)
+
+# visualize doublets
+DimPlot(pbmc.seurat.filtered, reduction = 'umap', group.by = "DF.classifications_0.25_0.21_691")
+
+# number of singlets and doublets
+table(pbmc.seurat.filtered@meta.data$DF.classifications_0.25_0.21_691)
+```

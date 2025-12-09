@@ -1,0 +1,9 @@
+*
+
+!.gitignore
+!README.md
+!single_cell.qmd
+!.Rprofile
+!renv.lock
+!renv/
+!renv/**

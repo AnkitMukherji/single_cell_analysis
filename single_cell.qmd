@@ -24,7 +24,7 @@ They differ in terms of transcript coverage (full-length vs 3' or 5' end), UMI p
 
 ## Seurat object structure:
 
-1.  **Assays:** Store the count data (e.g., RNA, SCT)
+1.  **Assays:** Store the count data (e.g., RNA, SCT (SCTransform))
 2.  **Metadata:** Contains information about the cells (e.g., cell type, experimental conditions)
 3.  **Reductions:** Store dimensionality reduction results (e.g., PCA, UMAP)
 4.  **Graphs:** Store graph-based representations of the data (e.g., nearest neighbor graphs)

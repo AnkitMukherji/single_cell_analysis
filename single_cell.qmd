@@ -96,7 +96,7 @@ cts <-  nsclc.sparse.m$`Gene Expression`
 nsclc.seurat.obj <- CreateSeuratObject(counts = cts, project = "NSCLC", min.cells = 3, min.features = 200)
 str(nsclc.seurat.obj)
 nsclc.seurat.obj
-# 29552 features across 42081 samples
+# 29552 features (genes) across 42081 samples (cells)
 
 # 1. QC -------
 View(nsclc.seurat.obj@meta.data)
@@ -112,6 +112,9 @@ FeatureScatter(nsclc.seurat.obj, feature1 = "nCount_RNA", feature2 = "nFeature_R
 # 2. Filtering -----------------
 nsclc.seurat.obj <- subset(nsclc.seurat.obj, subset = nFeature_RNA > 200 & nFeature_RNA < 2500 & 
                           percent.mt < 5)
+# nFeature_RNA: keep cells with > 200 and < 2500 detected genes
+# percent.mt: keep cells with < 5% mitochondrial reads
+# nCount_RNA: can also filter based on total counts of transcripts per cell if needed
 # Other filtering strategies include removing doublets using tools like DoubletFinder
 
 # 3. Normalize data ----------
@@ -347,7 +350,7 @@ Doublets are instances where two or more cells captured in a single droplet or w
 ## Strategies for optimal pK selection
 1. **Parameter Sweep:** DoubletFinder provides a function to perform a parameter sweep across a range of pK values. This involves running the doublet detection process multiple times with different pK values and evaluating the results.
 2. **BCmetric Evaluation:** After performing the parameter sweep, DoubletFinder calculates a BCmetric (Bimodality Coefficient metric) for each pK value. The BCmetric quantifies the separation between singlet and doublet populations in the doublet score distribution. A higher BCmetric indicates better separation and, therefore, a more optimal pK value.
-3. **Presence of Ground Truth:** If ground truth doublet annotations are available (e.g., from experimental validation or known cell barcodes), they can be used to directly assess the accuracy of doublet detection at different pK values. The pK that maximizes true positive rate while minimizing false positives can be selected.
+3. **Presence of Ground Truth:** If ground truth doublet annotations are available (e.g., emperically determined from sample multiplexing approaches), they can be used to directly assess the accuracy of doublet detection at different pK values. The pK that maximizes true positive rate while minimizing false positives can be selected.
 
 ## Best practices for using DoubletFinder
 1. DoubletFinder cannot be applied onto aggregated single cell datasets.
@@ -356,19 +359,23 @@ Doublets are instances where two or more cells captured in a single droplet or w
 4. Input data should be cleared of low-quality cells.
 5. Remove clusters with low UMIs, high mitochondrial read % and uninformative marker genes.
 
+## Dataset: https://www.10xgenomics.com/datasets/10k-human-pbmcs-3-v3-1-chromium-controller-3-1-high
+
 ```{r, eval=FALSE}
 # load libraries
 library(Seurat)
 library(ggplot2)
 library(tidyverse)
+
+# remotes::install_github('chris-mcginnis-ucsf/DoubletFinder', force = TRUE)
 library(DoubletFinder)
 
 # create counts matrix
-cts <- ReadMtx(mtx = '/Users/kr/Desktop/demo/single_cell_doublets/data/raw_feature_bc_matrix/matrix.mtx.gz',
-        features = '/Users/kr/Desktop/demo/single_cell_doublets/data/raw_feature_bc_matrix/features.tsv.gz',
-        cells = '/Users/kr/Desktop/demo/single_cell_doublets/data/raw_feature_bc_matrix/barcodes.tsv.gz')
+cts <- ReadMtx(mtx = 'doublet_identification_data/raw_feature_bc_matrix/matrix.mtx.gz',
+        features = 'doublet_identification_data/raw_feature_bc_matrix/features.tsv.gz',
+        cells = 'doublet_identification_data/raw_feature_bc_matrix/barcodes.tsv.gz')
 
-cts[1:10,1:10]
+cts[1:10,1:10] # rows = gene_names, cols = cell_barcodes
 
 # create Seurat object
 pbmc.seurat <- CreateSeuratObject(counts = cts)
@@ -398,8 +405,16 @@ pbmc.seurat.filtered <- FindClusters(object = pbmc.seurat.filtered)
 pbmc.seurat.filtered <- RunUMAP(object = pbmc.seurat.filtered, dims = 1:20)
 
 ## pK Identification (no ground-truth) ---------------------------------------------------------------------------------------
-sweep.res.list_pbmc <- paramSweep_v3(pbmc.seurat.filtered, PCs = 1:20, sct = FALSE)
+# Here, we use no ground truth because we don't have any prior knowledge about doublets in this dataset. We will perform a parameter sweep to identify the optimal pK value for doublet detection.
+
+# The paramSweep_v3 function introduces artificial doublets in varying proportions, merges them with the original dataset, pre-processes the combined data, and calculates the proportion of artificial nearest neighbors (pANN) for varying neighborhood sizes (pK values) and pN values.
+
+sweep.res.list_pbmc <- paramSweep(pbmc.seurat.filtered, PCs = 1:20, sct = FALSE)
+
+# The summarizeSweep function summarizes the results from the parameter sweep.
 sweep.stats_pbmc <- summarizeSweep(sweep.res.list_pbmc, GT = FALSE)
+
+# The find.pK function identifies the optimal pK value by evaluating the BCmetric for each pK and pN value tested during the parameter sweep.
 bcmvn_pbmc <- find.pK(sweep.stats_pbmc)
 
 ggplot(bcmvn_pbmc, aes(pK, BCmetric, group = 1)) +
@@ -411,23 +426,27 @@ pK <- bcmvn_pbmc %>% # select the pK that corresponds to max bcmvn to optimize d
   select(pK) 
 pK <- as.numeric(as.character(pK[[1]]))
 
+# We can calculate the expected number of doublets based on the total number of cells loaded and the number of cells recovered.
+
 ## Homotypic Doublet Proportion Estimate -------------------------------------------------------------------------------------
+# The modelHomotypic function estimates the proportion of homotypic doublets based on the clustering annotations of the dataset (here, the annotations are the cell clusters). This estimate is used to adjust the expected number of doublets (nExp) to account for the presence of homotypic doublets, which are more challenging to detect.
+
 annotations <- pbmc.seurat.filtered@meta.data$seurat_clusters
 homotypic.prop <- modelHomotypic(annotations)           ## ex: annotations <- seu_kidney@meta.data$ClusteringResults
-nExp_poi <- round(0.076*nrow(pbmc.seurat.filtered@meta.data))  ## Assuming 7.5% doublet formation rate - tailor for your dataset
+nExp_poi <- round(0.076*nrow(pbmc.seurat.filtered@meta.data))  ## Assuming 7.5% doublet formation rate and multiplying by total number of cells
 nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
 
 # run doubletFinder 
-pbmc.seurat.filtered <- doubletFinder_v3(pbmc.seurat.filtered, 
+pbmc.seurat.filtered <- doubletFinder(pbmc.seurat.filtered, 
                                      PCs = 1:20, 
                                      pN = 0.25, 
                                      pK = pK, 
                                      nExp = nExp_poi.adj,
-                                     reuse.pANN = FALSE, sct = FALSE)
+                                     reuse.pANN = NULL, sct = FALSE)
 
 # visualize doublets
-DimPlot(pbmc.seurat.filtered, reduction = 'umap', group.by = "DF.classifications_0.25_0.21_691")
+DimPlot(pbmc.seurat.filtered, reduction = 'umap', group.by = "DF.classifications_0.25_0.26_691")
 
 # number of singlets and doublets
-table(pbmc.seurat.filtered@meta.data$DF.classifications_0.25_0.21_691)
+table(pbmc.seurat.filtered@meta.data$DF.classifications_0.25_0.26_691)
 ```

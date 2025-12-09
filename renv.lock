@@ -37,9 +37,9 @@
     },
     "base64enc": {
       "Package": "base64enc",
-      "Version": "0.1-4",
-      "Source": "unknown",
-      "Title": "Tools for base64 Encoding",
+      "Version": "0.1-3",
+      "Source": "Repository",
+      "Title": "Tools for base64 encoding",
       "Author": "Simon Urbanek <Simon.Urbanek@r-project.org>",
       "Maintainer": "Simon Urbanek <Simon.Urbanek@r-project.org>",
       "Depends": [
@@ -48,11 +48,11 @@
       "Enhances": [
         "png"
       ],
-      "Description": "Tools for handling base64 encoding. It is more flexible than the orphaned base64 package.",
+      "Description": "This package provides tools for handling base64 encoding. It is more flexible than the orphaned base64 package.",
       "License": "GPL-2 | GPL-3",
-      "URL": "https://www.rforge.net/base64enc",
-      "BugReports": "https://github.com/s-u/base64enc/issues",
-      "NeedsCompilation": "yes"
+      "URL": "http://www.rforge.net/base64enc",
+      "NeedsCompilation": "yes",
+      "Repository": "CRAN"
     },
     "bslib": {
       "Package": "bslib",

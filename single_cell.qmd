@@ -407,7 +407,7 @@ pbmc.seurat.filtered <- RunUMAP(object = pbmc.seurat.filtered, dims = 1:20)
 ## pK Identification (no ground-truth) ---------------------------------------------------------------------------------------
 # Here, we use no ground truth because we don't have any prior knowledge about doublets in this dataset. We will perform a parameter sweep to identify the optimal pK value for doublet detection.
 
-# The paramSweep_v3 function introduces artificial doublets in varying proportions, merges them with the original dataset, pre-processes the combined data, and calculates the proportion of artificial nearest neighbors (pANN) for varying neighborhood sizes (pK values) and pN values.
+# The paramSweep function introduces artificial doublets in varying proportions, merges them with the original dataset, pre-processes the combined data, and calculates the proportion of artificial nearest neighbors (pANN) for varying neighborhood sizes (pK values) and pN values.
 
 sweep.res.list_pbmc <- paramSweep(pbmc.seurat.filtered, PCs = 1:20, sct = FALSE)
 
@@ -432,7 +432,7 @@ pK <- as.numeric(as.character(pK[[1]]))
 # The modelHomotypic function estimates the proportion of homotypic doublets based on the clustering annotations of the dataset (here, the annotations are the cell clusters). This estimate is used to adjust the expected number of doublets (nExp) to account for the presence of homotypic doublets, which are more challenging to detect.
 
 annotations <- pbmc.seurat.filtered@meta.data$seurat_clusters
-homotypic.prop <- modelHomotypic(annotations)           ## ex: annotations <- seu_kidney@meta.data$ClusteringResults
+homotypic.prop <- modelHomotypic(annotations)
 nExp_poi <- round(0.076*nrow(pbmc.seurat.filtered@meta.data))  ## Assuming 7.5% doublet formation rate and multiplying by total number of cells
 nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
 
@@ -449,4 +449,72 @@ DimPlot(pbmc.seurat.filtered, reduction = 'umap', group.by = "DF.classifications
 
 # number of singlets and doublets
 table(pbmc.seurat.filtered@meta.data$DF.classifications_0.25_0.26_691)
+```
+
+# Integrate single-cell RNA-Seq data using Harmony
+
+
+```{r, eval=FALSE}
+# set seed for reproducibility
+set.seed(1234)
+
+library(harmony)
+library(Seurat)
+library(SeuratData)
+library(tidyverse)
+library(ggplot2)
+
+# get data -------------------------
+AvailableData()
+# install dataset
+InstallData("ifnb")
+
+# load dataset
+LoadData("ifnb")
+str(ifnb)
+
+
+# QC and filtering
+ifnb$mito.percent <- PercentageFeatureSet(ifnb, pattern = '^MT-')
+View(ifnb@meta.data)
+# explore QC
+
+# filter
+ifnb
+ifnb.filtered <- subset(ifnb, subset = nCount_RNA > 800 &
+                          nFeature_RNA > 200 & 
+                          mito.percent < 5)
+
+# standard workflow steps
+ifnb.filtered <- NormalizeData(ifnb.filtered)
+ifnb.filtered <- FindVariableFeatures(ifnb.filtered)
+ifnb.filtered <- ScaleData(ifnb.filtered)
+ifnb.filtered <- RunPCA(ifnb.filtered)
+ElbowPlot(ifnb.filtered)
+ifnb.filtered <- RunUMAP(ifnb.filtered, dims = 1:20, reduction = 'pca')
+
+before <- DimPlot(ifnb.filtered, reduction = 'umap', group.by = 'stim')
+
+
+# run Harmony -----------
+ifnb.harmony <- ifnb.filtered %>%
+  RunHarmony(group.by.vars = 'stim', plot_convergence = FALSE)
+
+ifnb.harmony@reductions
+
+ifnb.harmony.embed <- Embeddings(ifnb.harmony, "harmony")
+ifnb.harmony.embed[1:10,1:10]
+
+
+
+# Do UMAP and clustering using ** Harmony embeddings instead of PCA **
+ifnb.harmony <- ifnb.harmony %>%
+  RunUMAP(reduction = 'harmony', dims = 1:20) %>%
+  FindNeighbors(reduction = "harmony", dims = 1:20) %>%
+  FindClusters(resolution = 0.5)
+
+# visualize 
+after <- DimPlot(ifnb.harmony, reduction = 'umap', group.by = 'stim')
+
+before|after
 ```

@@ -870,9 +870,9 @@ library(ggplot2)
 library(tidyverse)
 
 # read in data
-markers <- read.delim('ABC_Marker.txt', header = T) # gene metadata
-metadata <- read.delim('ABC_Meta.txt', header = T) # cell metadata
-expr <- read.delim('ABC_umi_matrix_7551_cells.csv', header = T, sep = ',') # expression matrix
+markers <- read.delim('trajectory_inference_monocle/ABC_Marker.txt', header = T) # gene metadata
+metadata <- read.delim('trajectory_inference_monocle/ABC_Meta.txt', header = T) # cell metadata
+expr <- read.delim('trajectory_inference_monocle/ABC_umi_matrix_7551_cells.csv', header = T, sep = ',') # expression matrix
 
 # or
 load("trajectory_inference_monocle/TI_monocle3_files.RData")
@@ -888,6 +888,8 @@ seu.obj@meta.data <- merge(seu.obj@meta.data, metadata, by.x = 'row.names', by.y
 View(seu.obj@meta.data)
 seu.obj@meta.data <- seu.obj@meta.data %>% 
   column_to_rownames(var = 'Row.names')
+Idents(seu.obj) <- seu.obj$orig.ident 
+seu.obj <- UpdateSeuratObject(seu.obj)
 seu.obj$mitopercent <- PercentageFeatureSet(seu.obj, pattern = '^MT-')
 seu.obj.filtered <- subset(seu.obj, subset = nCount_RNA > 800 &
                     nFeature_RNA > 500 &
@@ -895,11 +897,20 @@ seu.obj.filtered <- subset(seu.obj, subset = nCount_RNA > 800 &
 
 # subset my seurat object - B cells
 unique(seu.obj.filtered@meta.data$population)
+# sp - stem/progenitor cells
+# t - T cells
+# mo - monocytes
+# nk - NK cells
+# e - Erythrocytes
+# b - B cells
+# n - Neutrophils
 
 Idents(seu.obj.filtered) <- seu.obj.filtered$population
 b.seu <- subset(seu.obj.filtered, idents = "b")
 b.seu
 unique(b.seu@meta.data$redefined_cluster)
+# "Pre-B/Regulatory B", "Immature B", "Naive B", "Cycling Pre-B", "Pro-B", "Memory B", "Plasma"
+# As we have B-cells from different stages of development, we will perform trajectory analysis to understand the developmental trajectory of B-cells.    
 
 # pre-processing using seurat
 b.seu <- NormalizeData(b.seu)
@@ -907,7 +918,8 @@ b.seu <- FindVariableFeatures(b.seu)
 b.seu <- ScaleData(b.seu)
 b.seu <- RunPCA(b.seu)
 b.seu <- FindNeighbors(b.seu, dims = 1:30)
-b.seu <- FindClusters(b.seu, resolution = 0.9)
+b.seu <- FindClusters(b.seu, resolution = 0.9) 
+# Trajectory analysis is dependent on the topology of the data and, topology is influenced by clustering. Hence, it is important to choose an appropriate resolution that captures the biological variation in the data without over-clustering or under-clustering.
 b.seu <- RunUMAP(b.seu, dims = 1:30, n.neighbors = 50)
 
 a1 <- DimPlot(b.seu, reduction = 'umap', group.by = 'redefined_cluster', label = T)
@@ -933,12 +945,13 @@ rownames(fData(cds))[1:10]
 fData(cds)$gene_short_name <- rownames(fData(cds))
 
 # to get counts
-counts(cds)
+counts(cds) # sparse matrix with genes as rows and cells as columns
 
 # ...2. Cluster cells (using clustering info from seurat's UMAP)---------------------------
 # let's use the clustering information have
 
 # assign paritions
+# partitions are larger "superclusters" formed by grouping smaller, initial cell clusters (found via Louvain/Leiden algorithms) based on shared characteristics and proximity on the UMAP, helping to identify major cell types or states and providing robust units for trajectory inference, circumventing noise from individual clusters and outliers, and allowing analysis like differential expression to compare broad groups. We can create them with cluster_cells() and visualize/analyze them using plot_cells(group_cells_by="partition") or partitions()
 reacreate.partition <- c(rep(1,length(cds@colData@rownames)))
 names(reacreate.partition) <- cds@colData@rownames
 reacreate.partition <- as.factor(reacreate.partition)
@@ -980,7 +993,7 @@ plot_cells(cds,
            group_label_size = 5)
 
 # ...4. Order the cells in pseudotime -------------------
-cds <- order_cells(cds, reduction_method = 'UMAP', root_cells = colnames(cds[,clusters(cds) == 5]))
+cds <- order_cells(cds, reduction_method = 'UMAP', root_cells = colnames(cds[,clusters(cds) == 5])) # root cells are Pro-B cells (cluster 5)
 
 plot_cells(cds,
            color_cells_by = 'pseudotime',
@@ -998,6 +1011,7 @@ ggplot(data.pseudo, aes(monocle3_pseudotime, reorder(redefined_cluster, monocle3
   geom_boxplot()
 
 # ...5. Finding genes that change as a function of pseudotime --------------------
+# graph_test function identifies genes whose expression changes as a function of pseudotime along the learned trajectory graph. It uses a spatial autocorrelation statistic (Moran's I) to assess whether the expression of each gene is correlated with the pseudotime ordering of cells. Genes with significant positive Moran's I values are considered to be dynamically regulated along the trajectory, indicating that their expression levels change in a coordinated manner as cells progress through different states or stages represented by the pseudotime.
 deg_bcells <- graph_test(cds, neighbor_graph = 'principal_graph', cores = 4)
 
 deg_bcells %>% 
@@ -1012,4 +1026,92 @@ FeaturePlot(b.seu, features = c('E2F2', 'STMN1', 'CD52'))
 b.seu$pseudotime <- pseudotime(cds)
 Idents(b.seu) <- b.seu$redefined_cluster
 FeaturePlot(b.seu, features = "pseudotime", label = T)
+```
+
+# Automatic cell type annotation using SingleR (using a single reference dataset)
+![](images/cell_type_annotation.png)
+
+## Automatic cell type annotation
+- Manual annotation using known marker genes is time-consuming and requires prior knowledge.
+- Automatic cell type annotation tools use reference datasets with known cell type labels to assign cell types to new datasets based on gene expression profiles.
+
+## Manual cell type annotation
+- Identify marker genes for each cluster using differential expression analysis.
+- Compare identified marker genes with known cell type markers from literature or databases.
+
+## Strategies for automatic cell type annotation
+- **Marker-based Annotation**
+  - Labels cells or cell clusters on the basis of b
+
+```{r, eval=FALSE}
+# BiocManager::install(c('SingleR', 'celldex'))
+library(SingleR)
+library(celldex)
+library(Seurat)
+library(tidyverse)
+library(pheatmap)
+
+# Input Data 10X CellRanger .HDF5 format --------------
+hdf5_obj <- Read10X_h5(filename = '../data/20k_PBMC_3p_HT_nextgem_Chromium_X_filtered_feature_bc_matrix.h5',
+                       use.names = TRUE,
+                       unique.features = TRUE)
+pbmc.seurat <- CreateSeuratObject(counts = hdf5_obj)
+
+# QC and Filtering -----------
+# explore QC
+pbmc.seurat$mitoPercent <- PercentageFeatureSet(pbmc.seurat, pattern = '^MT-')
+pbmc.seurat.filtered <- subset(pbmc.seurat, subset = nCount_RNA > 800 &
+         nFeature_RNA > 500 &
+         mitoPercent < 10)
+
+# It is a good practice to filter out cells with non-sufficient genes identified and genes with non-sufficient expression across cells.
+# pre-process standard workflow ---------------
+pbmc.seurat.filtered <- NormalizeData(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- FindVariableFeatures(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- ScaleData(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- RunPCA(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- FindNeighbors(object = pbmc.seurat.filtered, dims = 1:20)
+pbmc.seurat.filtered <- FindClusters(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- RunUMAP(object = pbmc.seurat.filtered, dims = 1:20)
+
+# running steps above to get clusters
+View(pbmc.seurat.filtered@meta.data)
+DimPlot(pbmc.seurat.filtered, reduction = 'umap')
+
+# get reference data -----------
+ref <- celldex::HumanPrimaryCellAtlasData()
+View(as.data.frame(colData(ref)))
+
+# expression values are log counts (log normalized counts)
+
+# run SingleR (default mode) ---------
+# default for SingleR is to perform annotation of each individual cell in the test dataset
+
+pbmc_counts <- GetAssayData(pbmc.seurat.filtered, slot = 'counts')
+
+pred <- SingleR(test = pbmc_counts,
+        ref = ref,
+        labels = ref$label.main)
+
+pred
+
+pbmc.seurat.filtered$singleR.labels <- pred$labels[match(rownames(pbmc.seurat.filtered@meta.data), rownames(pred))]
+DimPlot(pbmc.seurat.filtered, reduction = 'umap', group.by = 'singleR.labels')
+
+# Annotation diagnostics ----------
+
+# ...Based on the scores within cells -----------
+pred
+pred$scores
+
+plotScoreHeatmap(pred)
+
+# ...Based on deltas across cells ----------
+
+plotDeltaDistribution(pred)
+
+# ...Comparing to unsupervised clustering ------------
+
+tab <- table(Assigned=pred$labels, Clusters=pbmc.seurat.filtered$seurat_clusters)
+pheatmap(log10(tab+10), color = colorRampPalette(c('white','blue'))(10))
 ```

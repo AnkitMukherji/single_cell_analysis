@@ -848,10 +848,47 @@ res
 
 # Single-cell trajectory analysis using Monocle3
 
+## What is pseudotime analysis?
+![](images/pseudotime_overview.jpg)
+When studying dynamic cellular processes like cell differentiation or cellular response to a stimulus, cells transition from one functional state to another. The transcriptional landscape also changes simultaneously i.e., genes that are upregulated at an earlier stage may be downregulated at a later stage or vice-versa. Instead of purifying cells into discrete cell stages experimentally which is difficult, Monocle applies an algorithm that learns the gene expression changes that each cell have to go through as part of dynamic biological process. If there are multiple outcomes of a process, Monocle will construct a branched trajectory where each branch would correspond to a cellular decision and, we can get the genes that are affected by this trajectory change or the genes regulating it.
+Thus, pseudotime measures how far a cell is in a dynamic process. Cells at an earlier state would have a lower pseudotime while cells at a later state would have a higher pseudotime. Ordering the cells on the basis of pseudotime defines the different stages a cell takes in a dynamic process.
+
+## General assumptions when performing trajectory analysis:
+1. Biological process of interest is dynamic.
+2. Appropriate cells are sampled. Data sampled to sufficient depth ensuring the presence of continuum of states among cells.
+
+## Which trajectory inference method to choose?
+Check https://dynverse.org/
+The choice of the method depends on:
+- Whether we expect disconnected trajectories in the data
+- Is any prior knowledge required to run the method
+- Do we expect any particular topology
+- User friendly
+- Compatible
+- Performance (dependent on the topology of the trajectory)
+
+## Workflow steps
+![](images/monocle3_workflow.png)
+
+## Note:
+- Monocle3 requires cell_data_set class
+- cell_data_set class is derived from SingleCellExperiment object
+- cell_data_set class requires three input files:
+  - expression matrix: count matrix where rows are genes and columns are cells
+  - cell metadata: rows are cells and columns are cell attributes like cell types, culture conditions or the day captured
+  - gene metadata: rows are genes and columns are gene attributes like GC content
+
+## Dataset: http://scrna.sklehabc.com/
+- Paper: https://academic.oup.com/nsr/article/8/3/nwaa180/5896476?login=false
+- 7551 human blood cells were profiled using single-cell RNA-seq (STRT-seq), covering 32 immunophenotypic cell types from 21 healthy donors.
+- We will be using the B-cells and its progenitors for our analysis (1448 cells)
+- Goal of the analysis:
+  - Construct a trajectory
+  - Order cells in pseudotime
+  - Find genes that change expression as cells progress along a trajectory
+
 ## Dataset: http://scrna.sklehabc.com/
 ```{r, eval=FALSE}
-# https://www.nature.com/articles/s41467-019-10291-0
-# https://academic.oup.com/nsr/article/8/3/nwaa180/5896476?login=false
 set.seed(1234)
 
 # BiocManager::install(c('BiocGenerics', 'DelayedArray', 'DelayedMatrixStats', 'limma', 'lme4', 'S4Vectors', 'SingleCellExperiment', 'SummarizedExperiment', 'batchelor', 'HDF5Array', 'ggrastr'))
@@ -1040,19 +1077,56 @@ FeaturePlot(b.seu, features = "pseudotime", label = T)
 - Compare identified marker genes with known cell type markers from literature or databases.
 
 ## Strategies for automatic cell type annotation
+![](images/automatic_annotation.png)
 - **Marker-based Annotation**
-  - Labels cells or cell clusters on the basis of b
+  - Labels cells or cell clusters on the basis of the characteristic expression of known marker genes.
+  - Known relationships between marker genes and cell types are obtained from databases, such as:
+    - MSigDB
+    - PangloDB
+    - CellMarker
+    - Manually from literature
+  - Strengths:
+    - Will assign labels only to cells associated with known markers, and other cells will remain unlabeled.
+  - Pitfalls:
+    - Markers are not easily accessible for all cell types.
+    - The marker gene or gene set (a collection of marker genes) should be specifically and consistently expressed in a given cell or cluster.
+    - Works well once a relevant and sufficiently large set of marker genes are collected.
+    - These methods work better for annotating major cell types and may not be able to effectively distinguish subtypes.
+
+- **Reference-based Annotation**
+  - Transfer labels from a reference cell or cluster (from expertly annotated scRNA-seq data) to a sufficiently similar one in the query (data to be annotated).
+  - Reference single-cell data are obtained from sources such as:
+    - Gene Expression Omnibus (GEO)
+    - the Single Cell Expression Atlas
+    - Cell Atlas projects
+  - Strengths:
+    - Accuracy of assigned labels and avoiding incorrect labeling of novel cell types.
+  - Pitfalls:
+    - Approach is feasible only if high-quality and relevant annotated reference single-cell data are available.
+    - Some tools have low accuracy if the reference data are incomplete or represent a poor match.
+
+## SingleR
+![](images/singleR.png)
+- Automatic cell type annotation that uses a reference-based annotation approach to transfer labels from an expertly annotated single-cell reference dataset to a query dataset.
+- It compares the gene expression profile of each cell in the query data with a set of already labeled reference samples. It uses Spearman correlation to measure similarity between a test cell's gene expression and each reference sample, which helps account for batch effects.
+- It focuses on marker genes that are highly variable across cell types in the reference dataset to improve accuracy.
+- Every cell in the query dataset has a correlation score with each reference cell type, and the cell type with the highest score is assigned to the query cell.
+- Fine tuning is performed to refine annotations for closely related cell-types. It does this by narrowing down the reference dataset to only include labels that have high correlation scores with the test cell and re-evaluating the scores to assign the final label.
+
+## Dataset: https://www.10xgenomics.com/datasets/20-k-human-pbm-cs-3-ht-v-3-1-chromium-x-3-1-high-6-1-0
+- **Goal:** Annotate cell types in 20k human peripheral blood mononuclear cells (PBMCs)
+- **Study Design:** PBMCs of a healthy female donor aged 25-30 were obtained by 10x genomics
 
 ```{r, eval=FALSE}
 # BiocManager::install(c('SingleR', 'celldex'))
 library(SingleR)
-library(celldex)
+library(celldex) # Reference datasets (derived from bulk RNA sequencing or microarray data of pure cell types)
 library(Seurat)
 library(tidyverse)
 library(pheatmap)
 
 # Input Data 10X CellRanger .HDF5 format --------------
-hdf5_obj <- Read10X_h5(filename = '../data/20k_PBMC_3p_HT_nextgem_Chromium_X_filtered_feature_bc_matrix.h5',
+hdf5_obj <- Read10X_h5(filename = 'automatic_cell_annotation/20k_PBMC_3p_HT_nextgem_Chromium_X_filtered_feature_bc_matrix.h5',
                        use.names = TRUE,
                        unique.features = TRUE)
 pbmc.seurat <- CreateSeuratObject(counts = hdf5_obj)
@@ -1064,6 +1138,11 @@ pbmc.seurat.filtered <- subset(pbmc.seurat, subset = nCount_RNA > 800 &
          nFeature_RNA > 500 &
          mitoPercent < 10)
 
+# SingleR can use raw counts from query data; it is not necessary to filter low-quality cells or perform prior normalization or scaling. 
+# However, reference data expression values need to be log-transformed before being provided to SingleR (not applicable on query data). 
+# Reference need to be log-transformed because SingleR uses the reference to identify "marker genes" by looking at differences in expression levels. Log transformation makes these relative differences (fold-changes) more manageable and ensures that highly expressed genes do not disproportionately dominate the selection of markers. Most pre-built SingleR references (like celldex) provide log-transformed values.
+# Query need not be log-transformed because the core SingleR algorithm uses Spearman correlation, which is a rank-based metric. Because rank-based correlations only care about the order of gene expression (which gene is 1st, 2nd, 3rd, etc.) and not the absolute values, the result is identical whether we use raw counts or log-transformed counts.
+# An exception for query data processing exists for full-length technologies like Smart-seq, where processing to transcripts per million (TPM) values can achieve better performance against Celldex references.
 # It is a good practice to filter out cells with non-sufficient genes identified and genes with non-sufficient expression across cells.
 # pre-process standard workflow ---------------
 pbmc.seurat.filtered <- NormalizeData(object = pbmc.seurat.filtered)
@@ -1079,21 +1158,25 @@ View(pbmc.seurat.filtered@meta.data)
 DimPlot(pbmc.seurat.filtered, reduction = 'umap')
 
 # get reference data -----------
+# The choice of reference has a major impact on annotation results. It's important to pick a reference that contains a superset of expected labels in our query data. While preferred, it's usually not an issue if the reference isn't generated using a similar technology or protocol as our test data when using SingleR.
 ref <- celldex::HumanPrimaryCellAtlasData()
 View(as.data.frame(colData(ref)))
-
 # expression values are log counts (log normalized counts)
 
 # run SingleR (default mode) ---------
 # default for SingleR is to perform annotation of each individual cell in the test dataset
-
-pbmc_counts <- GetAssayData(pbmc.seurat.filtered, slot = 'counts')
+pbmc_counts <- GetAssayData(pbmc.seurat.filtered, layer = 'counts') # raw counts
 
 pred <- SingleR(test = pbmc_counts,
         ref = ref,
-        labels = ref$label.main)
+        labels = ref$label.main) # using coarse labels
 
 pred
+# The output has the following columns:
+# 1) scores: matrix of scores for each cell (rows) and each reference label (columns). Each score indicates the correlation between the cell's expression profile and the reference label's profile.
+# 2) labels: assigned label for each cell based on the highest score
+# 3) delta.next: difference between the highest and second-highest score for each cell, indicating confidence in the assigned label. A larger delta indicates greater confidence in the assigned label, as it shows a clear distinction between the top two candidate labels.
+# 4) pruned.labels: refined labels after fine-tuning to improve accuracy, especially for closely related cell types
 
 pbmc.seurat.filtered$singleR.labels <- pred$labels[match(rownames(pbmc.seurat.filtered@meta.data), rownames(pred))]
 DimPlot(pbmc.seurat.filtered, reduction = 'umap', group.by = 'singleR.labels')
@@ -1104,14 +1187,22 @@ DimPlot(pbmc.seurat.filtered, reduction = 'umap', group.by = 'singleR.labels')
 pred
 pred$scores
 
-plotScoreHeatmap(pred)
+png('automatic_cell_annotation/singleR_score_heatmap.png', width = 3000, height = 1000, res= 150)
+p <- plotScoreHeatmap(pred)
+# Each column represents a cell from the query dataset, and each row represents a reference cell type. The color intensity indicates the score (correlation) between the cell's expression profile and the reference cell type's profile.
+# We expect to see cells assigned to a particular cell type show high scores for that cell type and low scores for others. This pattern indicates that the annotation is consistent and reliable.
+dev.off()
 
 # ...Based on deltas across cells ----------
 
 plotDeltaDistribution(pred)
+# In the delta distribution plot, we expect to see a peak at higher delta values, indicating that many cells have a strong preference for their assigned label over the next best option. A peak at low delta values may suggest uncertainty in the annotations, as many cells have similar scores for multiple labels.
 
 # ...Comparing to unsupervised clustering ------------
 
 tab <- table(Assigned=pred$labels, Clusters=pbmc.seurat.filtered$seurat_clusters)
 pheatmap(log10(tab+10), color = colorRampPalette(c('white','blue'))(10))
+# The heatmap shows the relationship between SingleR-assigned labels (rows) and Seurat clusters (columns).
+# We expect to see a strong diagonal pattern in the heatmap, where each SingleR label corresponds predominantly to a specific Seurat cluster. This pattern indicates that the automatic annotations align well with the unsupervised clustering results, suggesting that the assigned labels are biologically meaningful and consistent with the underlying data structure.
+# From unsupervised clustering, we can identify clusters that may represent novel or rare cell types not present in the reference dataset. These clusters may show low correspondence with any SingleR-assigned labels, indicating that they do not match well with known cell types in the reference. Such clusters warrant further investigation, as they could represent previously uncharacterized cell populations or states.
 ```

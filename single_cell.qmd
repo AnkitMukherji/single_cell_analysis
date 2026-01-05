@@ -1159,7 +1159,8 @@ DimPlot(pbmc.seurat.filtered, reduction = 'umap')
 
 # get reference data -----------
 # The choice of reference has a major impact on annotation results. It's important to pick a reference that contains a superset of expected labels in our query data. While preferred, it's usually not an issue if the reference isn't generated using a similar technology or protocol as our test data when using SingleR.
-ref <- celldex::HumanPrimaryCellAtlasData()
+surveyReferences()
+ref <- celldex::HumanPrimaryCellAtlasData() # consists of publicly available microarray data from sorted human primary cell types. Predominantly, it contains immune cell types, making it suitable for annotating PBMC data.
 View(as.data.frame(colData(ref)))
 # expression values are log counts (log normalized counts)
 
@@ -1205,4 +1206,448 @@ pheatmap(log10(tab+10), color = colorRampPalette(c('white','blue'))(10))
 # The heatmap shows the relationship between SingleR-assigned labels (rows) and Seurat clusters (columns).
 # We expect to see a strong diagonal pattern in the heatmap, where each SingleR label corresponds predominantly to a specific Seurat cluster. This pattern indicates that the automatic annotations align well with the unsupervised clustering results, suggesting that the assigned labels are biologically meaningful and consistent with the underlying data structure.
 # From unsupervised clustering, we can identify clusters that may represent novel or rare cell types not present in the reference dataset. These clusters may show low correspondence with any SingleR-assigned labels, indicating that they do not match well with known cell types in the reference. Such clusters warrant further investigation, as they could represent previously uncharacterized cell populations or states.
+```
+
+# Automatic cell type annotation using SingleR (using multiple reference datasets)
+
+## Strategies for using multiple reference datasets
+- **Strategy 1: Using reference-specific labels in a combined reference**
+  - Combine multiple reference datasets into a single reference by merging their expression matrices based on shared genes.
+  - Modify the cell type labels to include reference-specific prefixes to avoid label conflicts.
+    - Run SingleR using the combined reference dataset to annotate the query data.
+  - For example, if using two references, Human Primary Cell Atlas (HPCA) and Database of Immune Cell Expression (DICE):
+    - HPCA labels: "B cell", "T cell", "Monocyte"
+    - DICE labels: "B cell", "T cell", "NK cell"
+    - Modified labels:
+      - HPCA: "HPCA.B cell", "HPCA.T cell", "HPCA.Monocyte"
+      - DICE: "DICE.B cell", "DICE.T cell", "DICE.NK cell"
+  - Cons:
+    - Batch effects are not taken care of
+    - Loss of precision due to noise during the calculation of the score in each reference
+    - Risk of technical variation dominating classification results
+- **Strategy 2: Combining scores across multiple references (default approach implemented in SingleR)**
+  - Run SingleR separately for each reference dataset to obtain scores for each cell in the query data.
+  - For each cell, compare the scores obtained from different references and assign the label from the reference that gives the highest score.
+  - This approach allows leveraging the strengths of multiple references while minimizing the impact of batch effects and technical variations.
+  - Cons:
+    - Lack of consistency in labels across references complicates interpretation
+    - For example, "B cell" in one reference may correspond to "Naive B cell" in another reference
+- **Strategy 3: Using harmonized labels in a combined reference**
+  - Harmonized labels are standardized cell type labels that map similar cell types across different reference datasets to a common ontology.
+  - Cons:
+    - Assumes that harmonized labels are available
+    - Mapping process also runs the risk of discarding relevant information about the biological status (e.g., activation status, disease condition) if there is no obvious counterpart for that state in the ontology
+
+## Dataset: https://www.10xgenomics.com/datasets/20-k-human-pbm-cs-3-ht-v-3-1-chromium-x-3-1-high-6-1-0
+- **Goal:** Annotate cell types in 20k human peripheral blood mononuclear cells (PBMCs)
+- **Study Design:** PBMCs of a healthy female donor aged 25-30 were obtained by 10x genomics
+
+```{r, eval=FALSE}
+library(SingleR)
+library(celldex)
+library(ExperimentHub)
+library(SummarizedExperiment)
+library(Seurat)
+library(tidyverse)
+library(pheatmap)
+
+# 10X CellRanger .HDF5 format ---------
+hdf5_obj <- Read10X_h5(filename = "automatic_cell_annotation/20k_PBMC_3p_HT_nextgem_Chromium_X_filtered_feature_bc_matrix.h5",
+                       use.names = TRUE,
+                       unique.features = TRUE)
+pbmc.seurat <- CreateSeuratObject(counts = hdf5_obj)
+pbmc.seurat
+
+# QC and Filtering ----------
+# explore QC
+pbmc.seurat$mitoPercent <- PercentageFeatureSet(pbmc.seurat, pattern = '^MT-')
+VlnPlot(pbmc.seurat, features = c("nFeature_RNA", "nCount_RNA", "mitoPercent"), ncol = 3)
+pbmc.seurat.filtered <- subset(pbmc.seurat, subset = nCount_RNA > 800 &
+                                 nFeature_RNA > 500 &
+                                 mitoPercent < 10)
+
+# It is a good practice to filter out cells with non-sufficient genes identified and genes with non-sufficient expression across cells.
+
+# pre-process standard workflow ---------------
+pbmc.seurat.filtered <- NormalizeData(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- FindVariableFeatures(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- ScaleData(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- RunPCA(object = pbmc.seurat.filtered)
+ElbowPlot(pbmc.seurat.filtered)
+pbmc.seurat.filtered <- FindNeighbors(object = pbmc.seurat.filtered, dims = 1:20)
+pbmc.seurat.filtered <- FindClusters(object = pbmc.seurat.filtered)
+pbmc.seurat.filtered <- RunUMAP(object = pbmc.seurat.filtered, dims = 1:20)
+
+# running steps above to get clusters
+DimPlot(pbmc.seurat.filtered, reduction = "umap")
+View(pbmc.seurat.filtered@meta.data)
+
+# run SingleR with multiple reference datasets (default mode) ---------
+
+# for pbmc data, we will use two datasets
+hpca <- celldex::HumanPrimaryCellAtlasData()
+dice <- celldex::DatabaseImmuneCellExpressionData() # contains bulk RNA-seq data from sorted human immune cell types
+
+# ...1. Strategy 1: Using reference-specific labels ----------
+hpca$label.main
+dice$label.main
+
+# adding ref info to labels
+hpca$label.main <- paste0('HPCA.', hpca$label.main)
+dice$label.main <- paste0('DICE.', dice$label.main)
+
+# create a combined ref based on shared genes
+shared <- intersect(rownames(hpca), rownames(dice))
+combined <- cbind(hpca[shared,], dice[shared,])
+combined
+combined$label.main
+
+# run singleR using combined ref
+# savings counts into a separate object
+pbmc_counts <- GetAssayData(pbmc.seurat.filtered, layer = 'counts')
+
+com.res1 <- SingleR(test = pbmc_counts, ref = combined, labels = combined$label.main)
+table(com.res1$labels)
+
+pbmc.seurat.filtered$com.res1.labels <- com.res1[match(rownames(pbmc.seurat.filtered@meta.data), rownames(com.res1)), 'labels']
+View(pbmc.seurat.filtered@meta.data)
+
+DimPlot(pbmc.seurat.filtered, reduction = 'umap', group.by = 'com.res1.labels', label = TRUE)
+
+# Strategy 1 here is not a preferred approach because:
+# 1) Batch effects are not taken care of while combining the references
+# 2) There are no relevant biological differences between the references therefore, harmonization of the labels may be a better approach or strategy 2 where, the label from the highest scoring reference is assigned to the cell.
+
+# ...2. Strategy 2: Comparing scores across references ----------
+hpca$label.main
+dice$label.main
+hpca$label.main <- gsub('HPCA\\.','', hpca$label.main)
+dice$label.main <- gsub('DICE\\.','', dice$label.main)
+
+com.res2 <- SingleR(test = pbmc_counts, 
+        ref = list(HPCA = hpca, DICE = dice),
+        labels = list(hpca$label.main, dice$label.main))
+
+# Check the final label from the combined assignment.
+table(com.res2$labels)
+# There is inconsistency in the labels as we can see: B cell and B_cell
+# Due to this, harmonization may be a better approach
+
+# which reference scored best for which label?
+grouping <- paste0(com.res2$labels,'.', com.res2$reference)
+best_ref <- as.data.frame(split(com.res2, grouping))
+
+# get de. genes from each individual references
+# metadata has common genes and differentially expressed genes
+metadata(com.res2$orig.results$HPCA)$de.genes
+metadata(com.res2$orig.results$DICE)$de.genes
+
+# Combined diagnostics
+plotScoreHeatmap(com.res2)
+
+# ...3. Strategy 3: Using Harmonized Labels ----------
+
+hpca.ont <- celldex::HumanPrimaryCellAtlasData(cell.ont = 'nonna')
+dice.ont <- celldex::DatabaseImmuneCellExpressionData(cell.ont = 'nonna')
+
+# or download directly
+eh <- ExperimentHub()
+hub <- eh@hub
+all_celldex <- listResources(eh, "celldex")
+res <- query(eh, c("celldex", "Human", "Primary")) # EH3492 logcounts, EH3493 colData
+query(eh, c("celldex", "Database", "Immune")) # EH3488 logcounts, EH3489 colData
+
+# https://experimenthub.bioconductor.org/fetch/3508
+# https://experimenthub.bioconductor.org/fetch/3508
+hpca_assay <- readRDS("C:/path/to/hpca_assay.rds")
+hpca_meta  <- readRDS("C:/path/to/hpca_meta.rds")
+hpca.ont   <- SummarizedExperiment(assays=list(logcounts=hpca_assay), colData=hpca_meta)
+
+# https://experimenthub.bioconductor.org/fetch/3508
+# https://experimenthub.bioconductor.org/fetch/3508
+dice_assay <- readRDS("C:/path/to/dice_assay.rds")
+dice_meta  <- readRDS("C:/path/to/dice_meta.rds")
+dice.ont   <- SummarizedExperiment(assays=list(logcounts=dice_assay), colData=dice_meta)
+
+hpca.ont <- hpca.ont[, !is.na(colData(hpca.ont)$label.ont)]
+dice.ont <- dice.ont[, !is.na(colData(dice.ont)$label.ont)]
+
+# Using the same sets of genes:
+shared <- intersect(rownames(hpca.ont), rownames(dice.ont))
+hpca.ont <- hpca.ont[shared,]
+dice.ont <- dice.ont[shared,]
+
+# Showing the top 10 most frequent terms:
+tail(sort(table(hpca.ont$label.ont)),10)
+tail(sort(table(dice.ont$label.ont)), 10)
+
+# using label.ont instead on label.main while running SingleR
+com.res3 <- SingleR(test = pbmc_counts,
+        ref = list(HPCA = hpca.ont, DICE = dice.ont),
+        labels = list(hpca.ont$label.ont, dice.ont$label.ont))
+
+table(com.res3$labels)
+
+# How to map cell ontology terms? ----------------
+colData(hpca.ont)
+colData(dice.ont)
+
+hpca.fle <- system.file("mapping","hpca.tsv", package = "celldex")
+hpca.mapping <- read.delim(hpca.fle, header = F)
+```
+
+# Analyzing single-cell ATAC-Seq data
+
+```{r, eval=FALSE}
+# Vignette: https://stuartlab.org/signac/articles/pbmc_vignette
+
+# remotes::install_github("stuart-lab/signac", ref="develop")
+# install.packages("Matrix", type = "source")
+# install.packages("irlba", type = "source")
+# BiocManager::install("EnsDb.Hsapiens.v75")
+
+library(Signac)
+library(Seurat)
+library(EnsDb.Hsapiens.v75)
+library(tidyverse)
+
+# what is a fragment file? How is it generated?
+# https://support.10xgenomics.com/single-cell-atac/software/pipelines/latest/output/fragments
+frag.file <- read.delim('data/atac_v1_pbmc_10k_fragments.tsv.gz', header = F, nrows = 10)
+head(frag.file)
+
+# 1. Read in data -----------------
+counts <- Read10X_h5('data/atac_v1_pbmc_10k_filtered_peak_bc_matrix.h5')
+counts[1:10,1:10]
+
+chrom_assay <- CreateChromatinAssay(
+  counts = counts,
+  sep = c(":", "-"),
+  fragments = "data/atac_v1_pbmc_10k_fragments.tsv.gz",
+  min.cells = 10,
+  min.features = 200
+)
+
+str(chrom_assay)
+
+metadata <- read.csv(file = 'data/atac_v1_pbmc_10k_singlecell.csv', header = T, row.names = 1)
+View(metadata)
+
+# create a seurat Object
+pbmc <- CreateSeuratObject(
+  counts = chrom_assay,
+  meta.data = metadata,
+  assay = 'ATAC'
+)
+
+str(pbmc)
+
+# ....Adding Gene Annotation -------------------
+pbmc@assays$ATAC@annotation
+# extract gene annotations from EnsDb
+annotations <- GetGRangesFromEnsDb(ensdb = EnsDb.Hsapiens.v75)
+
+# change to UCSC style since the data was mapped to hg19
+seqlevels(annotations) <- paste0('chr', seqlevels(annotations))
+
+# add the gene information to the object
+Annotation(pbmc) <- annotations
+pbmc@assays$ATAC@annotation
+
+# 2. Computing QC ---------------------
+
+# compute nucleosome signal score per cell
+pbmc <- NucleosomeSignal(pbmc)
+
+# compute TSS enrichment score per cell
+pbmc <- TSSEnrichment(object = pbmc, fast = FALSE)
+
+# add blacklist ratio and fraction of reads in peaks
+pbmc$blacklist_ratio <- pbmc$blacklist_region_fragments / pbmc$peak_region_fragments
+pbmc$pct_reads_in_peaks <- pbmc$peak_region_fragments / pbmc$passed_filters * 100
+
+View(pbmc@meta.data)
+
+# ....Visualizing QC --------------------
+colnames(pbmc@meta.data)
+a1 <- DensityScatter(pbmc, x = 'nCount_ATAC', y = 'TSS.enrichment', log_x = TRUE, quantiles = TRUE)
+a2 <- DensityScatter(pbmc, x = 'nucleosome_signal', y = 'TSS.enrichment', log_x = TRUE, quantiles = TRUE)
+
+a1 | a2
+
+VlnPlot(object = pbmc, 
+        features = c('nCount_ATAC', 'nFeature_ATAC', 'TSS.enrichment', 'nucleosome_signal', 'blacklist_ratio', 'pct_reads_in_peaks'),
+        pt.size = 0.1,
+        ncol = 6)
+
+# ....Filtering poor quality cells --------------------
+pbmc <- subset(x = pbmc,
+               subset = nCount_ATAC > 3000 &
+                 nCount_ATAC < 30000 &
+                 pct_reads_in_peaks > 15 & 
+                 blacklist_ratio < 0.05 &
+                 nucleosome_signal < 4 &
+                 TSS.enrichment > 3)
+
+# 3. Normalization and linear dimensional reduction ------------------
+pbmc <- RunTFIDF(pbmc) # normalization
+pbmc <- FindTopFeatures(pbmc, min.cutoff = 'q0') # selecting top features
+pbmc <- RunSVD(pbmc) # dimensionality reduction
+
+DepthCor(pbmc)
+
+# 4. Non-linear dimensional reduction and Clustering -------------------
+pbmc <- RunUMAP(object = pbmc, reduction = 'lsi', dims = 2:30)
+pbmc <- FindNeighbors(object = pbmc, reduction = 'lsi', dims = 2:30)
+pbmc <- FindClusters(object = pbmc, algorithm = 3)
+
+DimPlot(object = pbmc, label = TRUE) + NoLegend()
+
+# script to perform differential peak accesibility analysis and visualize genomic regions using single-cell ATAC-Seq data
+# Vignette: https://stuartlab.org/signac/articles/pbmc_vignette
+# continued from: PART 1 link: https://youtu.be/yEKZJVjc5DY?si=cm0okOcJQMwkCvPo
+# setwd("~/Desktop/demo/single_cell_ATACSeq")
+
+# install packages
+# remotes::install_github("stuart-lab/signac", ref="develop")
+# install.packages("Matrix", type = "source")
+# install.packages("irlba", type = "source")
+# BiocManager::install("EnsDb.Hsapiens.v75")
+
+library(Signac)
+library(Seurat)
+library(EnsDb.Hsapiens.v75)
+library(tidyverse)
+library(SingleR)
+
+# Pre-processed ATAC data ----------------------------------------------------
+pbmc
+DimPlot(object = pbmc, label = TRUE) + NoLegend()
+
+# Create a gene activity matrix ------------------------------------------------
+gene.activities <- GeneActivity(pbmc)
+gene.activities[1:10,1:10]
+
+# add the gene activity matrix to the Seurat object as a new assay and normalize it
+pbmc[['RNA']] <- CreateAssayObject(counts = gene.activities)
+pbmc@assays
+pbmc <- NormalizeData(object = pbmc,
+              assay = 'RNA',
+              normalization.method = 'LogNormalize',
+              scale.factor = median(pbmc$nCount_RNA))
+
+
+# to interpret ATAC-Seq clusters, visualizing activity of canonical marker genes
+# assuming a general correspondence between gene body/promoter accessibility and gene expression which may not always be the case
+
+DefaultAssay(pbmc) <- 'RNA'
+
+FeaturePlot(pbmc, features = c('MS4A1', 'CD3D', 'LEF1', 'NKG7', 'TREM1', 'LYZ'),
+            pt.size = 0.1,
+            max.cutoff = 'q95',
+            ncol = 3)
+
+
+# Integrating with scRNA-Seq data. ---------------------------------------------
+# Link to pre-processed RNA-Seq data: https://signac-objects.s3.amazonaws.com/pbmc_10k_v3.rds
+
+# Load the pre-processed scRNA-seq data for PBMCs
+pbmc_rna <- readRDS('data/pbmc_10k_v3.rds')
+pbmc_rna <- UpdateSeuratObject(pbmc_rna)
+
+View(pbmc_rna@meta.data)
+
+# plot them before integrating
+p1 <- DimPlot(pbmc, reduction = 'umap') + NoLegend() + ggtitle('scATAC-Seq')
+p2 <- DimPlot(pbmc_rna, reduction = 'umap', group.by = 'celltype', repel = TRUE, label = TRUE) + ggtitle('scRNA-Seq') + NoLegend()
+
+p1 | p2
+
+# ** Should have the prior knowledge of cell types expected in your query dataset when using ref dataset
+
+
+# ....Transfer Anchors by Seurat --------------
+# Identify anchors
+
+transfer.anchors <- FindTransferAnchors(reference = pbmc_rna,
+                    query = pbmc,
+                    reduction = 'pcaproject') # CCA is very slow
+
+
+predicted.labels <- TransferData(anchorset = transfer.anchors,
+             refdata = pbmc_rna$celltype,
+             weight.reduction = pbmc[['lsi']],
+             dims = 2:30)
+head(predicted.labels)
+
+pbmc <- AddMetaData(object = pbmc, metadata = predicted.labels)
+View(pbmc@meta.data)
+
+
+plot1 <- DimPlot(pbmc, 
+        reduction = 'umap',
+        group.by = 'predicted.id',
+        label = TRUE,
+        repel = TRUE) + NoLegend() + ggtitle('scATAC-Seq')
+
+plot2 <- DimPlot(pbmc_rna, 
+                 reduction = 'umap',
+                 group.by = 'celltype',
+                 label = TRUE,
+                 repel = TRUE) + NoLegend() + ggtitle('scRNA-Seq')
+
+plot1 | plot2
+
+
+
+# Finding differentially accessible peaks between cell types -------------------
+Idents(pbmc) <- pbmc$predicted.id
+
+
+# change back to working with peaks instead of gene activities
+DefaultAssay(pbmc) <- 'ATAC'
+
+da_peaks <- FindMarkers(object = pbmc,
+            ident.1 = 'CD4 Naive',
+            ident.2 = 'CD14+ Monocytes',
+            test.use = 'LR',
+            latent.vars = 'nCount_ATAC')
+
+head(da_peaks)
+
+da_plot1 <- VlnPlot(object = pbmc,
+        features = rownames(da_peaks)[1],
+        pt.size = 0.1,
+        idents = c('CD4 Naive','CD14+ Monocytes'))
+
+da_plot2 <- FeaturePlot(object = pbmc,
+            features = rownames(da_peaks)[1],
+            pt.size = 0.1)
+
+da_plot1 | da_plot2
+
+
+# fold change between two groups of cells
+fc <- FoldChange(object = pbmc, ident.1 = 'CD4 Naive', ident.2 = 'CD14+ Monocytes')
+# order by fold change
+fc <- fc[order(fc$avg_log2FC, decreasing = TRUE),]
+head(fc)
+
+
+
+# plotting genomic regions -----------------------------------
+
+
+# set plotting order
+
+levels(pbmc) <- unique(pbmc$predicted.id)
+
+CoveragePlot(object = pbmc,
+             region = rownames(da_peaks)[1],
+             extend.upstream = 40000,
+             extend.downstream = 20000)
+
+
+# create interactive version of these plots?
+CoverageBrowser(pbmc, region = 'CD8A')
 ```

@@ -1245,8 +1245,6 @@ pheatmap(log10(tab+10), color = colorRampPalette(c('white','blue'))(10))
 ```{r, eval=FALSE}
 library(SingleR)
 library(celldex)
-library(ExperimentHub)
-library(SummarizedExperiment)
 library(Seurat)
 library(tidyverse)
 library(pheatmap)
@@ -1346,31 +1344,33 @@ metadata(com.res2$orig.results$DICE)$de.genes
 plotScoreHeatmap(com.res2)
 
 # ...3. Strategy 3: Using Harmonized Labels ----------
-
 hpca.ont <- celldex::HumanPrimaryCellAtlasData(cell.ont = 'nonna')
 dice.ont <- celldex::DatabaseImmuneCellExpressionData(cell.ont = 'nonna')
+# Saved in folder, check using ExperimentHub::getExperimentHubOption("CACHE")
 
 # or download directly
+# no cell ontology column available in ExperimentHub for these references
+'''
 eh <- ExperimentHub()
-hub <- eh@hub
 all_celldex <- listResources(eh, "celldex")
-res <- query(eh, c("celldex", "Human", "Primary")) # EH3492 logcounts, EH3493 colData
+query(eh, c("celldex", "Human", "Primary")) # EH3492 logcounts, EH3493 colData
 query(eh, c("celldex", "Database", "Immune")) # EH3488 logcounts, EH3489 colData
 
 # https://experimenthub.bioconductor.org/fetch/3508
-# https://experimenthub.bioconductor.org/fetch/3508
-hpca_assay <- readRDS("C:/path/to/hpca_assay.rds")
-hpca_meta  <- readRDS("C:/path/to/hpca_meta.rds")
+# https://experimenthub.bioconductor.org/fetch/3510
+hpca_assay <- readRDS("automatic_cell_annotation/hpca_logcounts.rds")
+hpca_meta  <- readRDS("automatic_cell_annotation/hpca_coldata.rds")
 hpca.ont   <- SummarizedExperiment(assays=list(logcounts=hpca_assay), colData=hpca_meta)
 
-# https://experimenthub.bioconductor.org/fetch/3508
-# https://experimenthub.bioconductor.org/fetch/3508
+# https://experimenthub.bioconductor.org/fetch/3504
+# https://experimenthub.bioconductor.org/fetch/3505
 dice_assay <- readRDS("C:/path/to/dice_assay.rds")
 dice_meta  <- readRDS("C:/path/to/dice_meta.rds")
 dice.ont   <- SummarizedExperiment(assays=list(logcounts=dice_assay), colData=dice_meta)
 
 hpca.ont <- hpca.ont[, !is.na(colData(hpca.ont)$label.ont)]
 dice.ont <- dice.ont[, !is.na(colData(dice.ont)$label.ont)]
+'''
 
 # Using the same sets of genes:
 shared <- intersect(rownames(hpca.ont), rownames(dice.ont))
@@ -1389,18 +1389,74 @@ com.res3 <- SingleR(test = pbmc_counts,
 table(com.res3$labels)
 
 # How to map cell ontology terms? ----------------
+# 1) The ontology terms can be mapped to label.main or label.fine from the colData of each reference dataset. We can add a column in the metadata of seurat object and visualize as UMAP.
 colData(hpca.ont)
 colData(dice.ont)
-
+# 2) The mapping file can be obtained from celldex package
 hpca.fle <- system.file("mapping","hpca.tsv", package = "celldex")
 hpca.mapping <- read.delim(hpca.fle, header = F)
 ```
 
 # Analyzing single-cell ATAC-Seq data
+![](images/scATAC-seq_overview.png)
+
+## Blog: https://www.10xgenomics.com/blog/is-single-cell-epigenomics-right-for-me-atac-ing-your-research-questions-for-deeper-insights
+
+## What is Assay for Transposase-Accessible Chromatin with sequencing (ATAC-Seq)?
+- Open chromatin reveals gene regulation insights
+- ATAC-Seq works by using a hyperactive Tn5 transposase enzyme that cuts and inserts into accessible regions of chromatin with sequencing adapters.
+- Sequencing identifies accessible DNA for regulatory protein binding.
+- Identifies regulatory elements linked to genes, unraveling their role in gene expression control.
+
+## Bulk vs Single-cell ATAC-Seq
+- ****Bulk ATAC-Seq****
+  - Provides an average chromatin accessibility profile across a population of cells.
+  - Useful for identifying differential chromatin accessibility between experimental conditions or tissue types, and for annotating regulatory elements such as promoters and enhancers.
+  - Lacks the ability to resolve cell-to-cell differences.
+- ****Single-cell ATAC-Seq****
+  - Profiles chromatin accessibility at the individual cell level.
+  - Reveals cellular heterogeneity in chromatin accessibility, identifying distinct cell types and states within complex tissues.
+  - Enables the study of dynamic changes in chromatin accessibility during processes like development, differentiation, and disease progression.
+
+## scATAC-Seq applications
+- **Cell type identification and classification:** Understanding cellular heterogeneity and lineage relationships.
+- **Regulatory element identification:** Mapping enhancers, promoters, and other regulatory elements.
+- **Cell state characterization and dynamics:** Studying changes in chromatin accessibility during development, differentiation, and disease.
+- **Transcription factor (TF) activity inference:** Inferring TF binding and activity based on chromatin accessibility patterns. Elucidate the regulatory mechanisms underlying gene expression and cell fate decisions.
+- **Epigenetic heterogeneity analysis:** Exploring variability in chromatin accessibility within and between cell populations.
+- **Disease Mechanisms and Biomarker Discovery:** identifying disease-specific chromatin signatures and potential therapeutic targets.
+- **Drug Discovbery and Development:** Assessing the impact of drugs on chromatin accessibility and gene regulation at the single-cell level.
+- **Functional Genomics and CRISPR Screens:** Integrating scATAC-Seq with CRISPR-based perturbations to study gene regulatory networks.
+
+## Steps in analyzing scATAC-Seq data
+![](images/scATAC-seq_analysis.jpg)
+1. **Data Preprocessing and Quality Control:**
+   - Read in raw sequencing data and generate a count matrix.
+   - Perform quality control to filter out low-quality cells and peaks.
+2. **Normalization and Dimensionality Reduction:**
+   - Normalize the data to account for technical variability.
+   - Perform dimensionality reduction techniques (e.g., PCA, LSI) to capture the most informative features.
+3. **Clustering and Cell Type Annotation:**
+   - Cluster cells based on their chromatin accessibility profiles.
+   - Annotate cell types using known marker genes or reference datasets.
+4. **Differential Accessibility Analysis:**
+   - Identify differentially accessible regions (DARs) between cell types or conditions.
+5. **Motif Analysis and Transcription Factor Activity Inference:**
+   - Perform motif enrichment analysis to identify potential regulatory elements.
+   - Infer transcription factor activity based on motif accessibility.
+
+## Different tools for analyzing scATAC-Seq data
+![](images/scATAC-seq_tool_comparison.png)
+- **Signac**
+- **ArchR**
+- **scATACpipe (nextflow pipeline)**
+- **EpiScanpy**
+- **snapATAC**
 
 ```{r, eval=FALSE}
 # Vignette: https://stuartlab.org/signac/articles/pbmc_vignette
 
+# BiocManager::install(c('GenomeInfoDb', 'Rsamtools', ''BiocParallel', 'biovizBase'))
 # remotes::install_github("stuart-lab/signac", ref="develop")
 # install.packages("Matrix", type = "source")
 # install.packages("irlba", type = "source")
@@ -1411,26 +1467,34 @@ library(Seurat)
 library(EnsDb.Hsapiens.v75)
 library(tidyverse)
 
-# what is a fragment file? How is it generated?
-# https://support.10xgenomics.com/single-cell-atac/software/pipelines/latest/output/fragments
-frag.file <- read.delim('data/atac_v1_pbmc_10k_fragments.tsv.gz', header = F, nrows = 10)
-head(frag.file)
+# What is a fragment file? How is it generated?
+# https://www.10xgenomics.com/support/software/cell-ranger-arc/latest/analysis/outputs/fragments-file
+# A fragment file is a tab-separated values (TSV) file that contains information about the sequenced DNA fragments obtained from single-cell ATAC-Seq experiments. It typically includes the following columns:
+# 1. Chromosome: The chromosome where the fragment is located.
+# 2. Start Position: The starting position of the fragment on the chromosome.
+# 3. End Position: The ending position of the fragment on the chromosome.
+# 4. Cell Barcode: A unique identifier for the cell from which the fragment was derived.
+# 5. Read Count: The number of reads that map to the fragment.
+# Fragment files are generated during the data processing pipeline of single-cell ATAC-Seq experiments. After sequencing, the raw reads are aligned to a reference genome, and the aligned reads are then processed to identify the accessible chromatin regions. The fragments are defined based on the aligned reads, and the relevant information is extracted to create the fragment file.
+# Fragment files are essential for downstream analysis in single-cell ATAC-Seq, as they provide the necessary information to quantify chromatin accessibility at the single-cell level and to link accessibility data to individual cells based on their barcodes.
+# Example fragment file: scATAC-seq/10k_pbmc_ATACv2_nextgem_Chromium_Controller_fragments.tsv.gz
 
 # 1. Read in data -----------------
-counts <- Read10X_h5('data/atac_v1_pbmc_10k_filtered_peak_bc_matrix.h5')
+counts <- Read10X_h5('scATAC-seq/10k_pbmc_ATACv2_nextgem_Chromium_Controller_filtered_peak_bc_matrix.h5')
 counts[1:10,1:10]
+# The rows represent genomic peaks (regions of accessible chromatin), and the columns represent individual cells identified by their unique barcodes. The values in the matrix indicate the number of sequencing reads (or fragments) that overlap each peak for each cell.
 
 chrom_assay <- CreateChromatinAssay(
   counts = counts,
   sep = c(":", "-"),
-  fragments = "data/atac_v1_pbmc_10k_fragments.tsv.gz",
-  min.cells = 10,
-  min.features = 200
+  fragments = "scATAC-seq/10k_pbmc_ATACv2_nextgem_Chromium_Controller_fragments.tsv.gz",
+  min.cells = 10, # exclude peaks detected in fewer than 10 cells
+  min.features = 200 # exclude cells with fewer than 200 peaks detected
 )
 
 str(chrom_assay)
 
-metadata <- read.csv(file = 'data/atac_v1_pbmc_10k_singlecell.csv', header = T, row.names = 1)
+metadata <- read.csv(file = 'scATAC-seq/10k_pbmc_ATACv2_nextgem_Chromium_Controller_singlecell.csv', header = T, row.names = 1)
 View(metadata)
 
 # create a seurat Object

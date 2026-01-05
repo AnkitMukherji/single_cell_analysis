@@ -1453,6 +1453,26 @@ hpca.mapping <- read.delim(hpca.fle, header = F)
 - **EpiScanpy**
 - **snapATAC**
 
+## scATAC-Seq Quality Control
+1. **Nucleosome banding pattern/Nucleosome Signal**
+  - Idea: Retain fragments free of nucleosomes
+  - Nucleosome Signal = Measures the ratio of mononucleosomal to nucleosome-free fragments.
+  - Nucleosome banding pattern reflects the periodicity of fragment sizes corresponding to nucleosome positions. A high nucleosome signal indicates well-defined nucleosome positioning, while a low signal suggests more open chromatin.
+2. **Transcription start site (TSS) enrichment score**
+  - Idea: Retain fragments enriched at TSS
+  - TSS Enrichment Score = Measures the enrichment of fragments at transcription start sites (TSS) compared to flanking regions.
+3. **Total number of fragments in peaks**
+  - Measure of sequencing depth and library complexity
+4. **Fraction of fragments in peaks**
+  - Cells with < 15-20%  fragments in peaks are of low-quality or have technical issues
+5. **Ratio reads in genomic blacklist regions**
+  - Cells with high proportion of reads mapping to regions associated with artifactual signals
+
+## Strategies for cell annotation in scATAC-Seq
+- **Annotation using cis-regulatory elements:** Cells are labeled by visualization of promoter accessibility patterns for cell type-specific marker genes. For example, CD3D promoter accessibility for T cells.
+- **Annotation using Cell Type-Specific Feature Set:** Comparing these features (DNA peaks, gene activation scores, and motif accessibility) enrichment against background levels to accurately classify based on the highest enrichment scores.
+- **Annotation using RNA Sequencing Data as Reference:** Cell type prediction based on distances to cells pre-annotated by RNA-seq data. This approach assumes that cells with similar chromatin accessibility profiles will have similar gene expression profiles.
+
 ```{r, eval=FALSE}
 # Vignette: https://stuartlab.org/signac/articles/pbmc_vignette
 
@@ -1463,6 +1483,7 @@ hpca.mapping <- read.delim(hpca.fle, header = F)
 # BiocManager::install("EnsDb.Hsapiens.v75")
 
 library(Signac)
+library(SingleR)
 library(Seurat)
 library(EnsDb.Hsapiens.v75)
 library(tidyverse)
@@ -1534,7 +1555,12 @@ View(pbmc@meta.data)
 
 # ....Visualizing QC --------------------
 colnames(pbmc@meta.data)
+
+# This plot shows the relationship between the number of fragments in peaks (nCount_ATAC) and the TSS enrichment score for each cell. The x-axis represents the log-transformed number of fragments in peaks, while the y-axis represents the TSS enrichment score. Each point corresponds to a single cell, and the color gradient indicates the density of cells in that region of the plot.
+# Cells with higher nCount_ATAC values tend to have higher TSS enrichment scores, indicating better quality cells with more accessible chromatin at transcription start sites. The quantiles help to visualize the distribution of cells across different levels of nCount_ATAC and TSS enrichment.
 a1 <- DensityScatter(pbmc, x = 'nCount_ATAC', y = 'TSS.enrichment', log_x = TRUE, quantiles = TRUE)
+# This plot shows the relationship between the nucleosome signal and the TSS enrichment score for each cell. The x-axis represents the log-transformed nucleosome signal, while the y-axis represents the TSS enrichment score. Each point corresponds to a single cell, and the color gradient indicates the density of cells in that region of the plot.
+# Cells with lower nucleosome signal values tend to have higher TSS enrichment scores, indicating better quality cells with more accessible chromatin at transcription start sites. The quantiles help to visualize the distribution of cells across different levels of nucleosome signal and TSS enrichment.
 a2 <- DensityScatter(pbmc, x = 'nucleosome_signal', y = 'TSS.enrichment', log_x = TRUE, quantiles = TRUE)
 
 a1 | a2
@@ -1546,19 +1572,21 @@ VlnPlot(object = pbmc,
 
 # ....Filtering poor quality cells --------------------
 pbmc <- subset(x = pbmc,
-               subset = nCount_ATAC > 3000 &
-                 nCount_ATAC < 30000 &
-                 pct_reads_in_peaks > 15 & 
+               subset = nCount_ATAC > 9000 &
+                 nCount_ATAC < 50000 &
+                 pct_reads_in_peaks > 40 & 
                  blacklist_ratio < 0.05 &
                  nucleosome_signal < 4 &
-                 TSS.enrichment > 3)
+                 TSS.enrichment > 1)
 
 # 3. Normalization and linear dimensional reduction ------------------
+# This normalizes for differences in sequencing depth between cells and accounts for the inherent sparsity of scATAC-seq data by weighting features based on their frequency across cells.
 pbmc <- RunTFIDF(pbmc) # normalization
 pbmc <- FindTopFeatures(pbmc, min.cutoff = 'q0') # selecting top features
 pbmc <- RunSVD(pbmc) # dimensionality reduction
 
 DepthCor(pbmc)
+# The first dimension of the LSI (Latent Semantic Indexing) reduction is highly correlated with sequencing depth (nCount_ATAC), indicating that it primarily captures technical variation related to sequencing depth rather than biological variation. Therefore, it is advisable to exclude this dimension from downstream analyses, such as clustering and visualization, to focus on biologically relevant signals.
 
 # 4. Non-linear dimensional reduction and Clustering -------------------
 pbmc <- RunUMAP(object = pbmc, reduction = 'lsi', dims = 2:30)
@@ -1567,28 +1595,13 @@ pbmc <- FindClusters(object = pbmc, algorithm = 3)
 
 DimPlot(object = pbmc, label = TRUE) + NoLegend()
 
-# script to perform differential peak accesibility analysis and visualize genomic regions using single-cell ATAC-Seq data
-# Vignette: https://stuartlab.org/signac/articles/pbmc_vignette
-# continued from: PART 1 link: https://youtu.be/yEKZJVjc5DY?si=cm0okOcJQMwkCvPo
-# setwd("~/Desktop/demo/single_cell_ATACSeq")
-
-# install packages
-# remotes::install_github("stuart-lab/signac", ref="develop")
-# install.packages("Matrix", type = "source")
-# install.packages("irlba", type = "source")
-# BiocManager::install("EnsDb.Hsapiens.v75")
-
-library(Signac)
-library(Seurat)
-library(EnsDb.Hsapiens.v75)
-library(tidyverse)
-library(SingleR)
-
-# Pre-processed ATAC data ----------------------------------------------------
-pbmc
-DimPlot(object = pbmc, label = TRUE) + NoLegend()
+# 5. Cell Type Annotation -------------------
+# Annotation by integrating the scATAC-Seq data with pre-annotated scRNA-Seq data for PBMCs
+# Finding differentially accessible peaks between cell types
+# Visualize genomic regions of interest
 
 # Create a gene activity matrix ------------------------------------------------
+# Gene activity can be used as a proxy for gene expression in scATAC-seq data by quantifying the accessibility of chromatin regions associated with each gene, such as promoters and gene bodies. This approach assumes that open chromatin regions near a gene correlate with its transcriptional activity, allowing for the inference of gene expression levels from chromatin accessibility data. It enables the integration of scATAC-seq data with scRNA-seq data for cell type annotation and functional analysis. This is done by aggregating the accessibility signals from peaks located within gene bodies and promoter regions to create a gene activity score for each gene in each cell.
 gene.activities <- GeneActivity(pbmc)
 gene.activities[1:10,1:10]
 
@@ -1600,23 +1613,24 @@ pbmc <- NormalizeData(object = pbmc,
               normalization.method = 'LogNormalize',
               scale.factor = median(pbmc$nCount_RNA))
 
-
 # to interpret ATAC-Seq clusters, visualizing activity of canonical marker genes
 # assuming a general correspondence between gene body/promoter accessibility and gene expression which may not always be the case
 
 DefaultAssay(pbmc) <- 'RNA'
 
+# This can be one of the strategies for cell type annotation in scATAC-Seq data
+# Annotation using cis-regulatory elements: Cells are labeled by visualization of promoter accessibility patterns for cell type-specific marker genes. For example, CD3D promoter accessibility for T cells.
+# Visualizing gene activity for canonical marker genes of major PBMC cell types
 FeaturePlot(pbmc, features = c('MS4A1', 'CD3D', 'LEF1', 'NKG7', 'TREM1', 'LYZ'),
             pt.size = 0.1,
             max.cutoff = 'q95',
             ncol = 3)
 
-
 # Integrating with scRNA-Seq data. ---------------------------------------------
 # Link to pre-processed RNA-Seq data: https://signac-objects.s3.amazonaws.com/pbmc_10k_v3.rds
 
 # Load the pre-processed scRNA-seq data for PBMCs
-pbmc_rna <- readRDS('data/pbmc_10k_v3.rds')
+pbmc_rna <- readRDS('scATAC-seq/pbmc_10k_v3.rds')
 pbmc_rna <- UpdateSeuratObject(pbmc_rna)
 
 View(pbmc_rna@meta.data)
@@ -1629,7 +1643,6 @@ p1 | p2
 
 # ** Should have the prior knowledge of cell types expected in your query dataset when using ref dataset
 
-
 # ....Transfer Anchors by Seurat --------------
 # Identify anchors
 
@@ -1637,11 +1650,11 @@ transfer.anchors <- FindTransferAnchors(reference = pbmc_rna,
                     query = pbmc,
                     reduction = 'pcaproject') # CCA is very slow
 
-
 predicted.labels <- TransferData(anchorset = transfer.anchors,
              refdata = pbmc_rna$celltype,
              weight.reduction = pbmc[['lsi']],
-             dims = 2:30)
+             dims = 2:30,
+             k.weight = 20)
 head(predicted.labels)
 
 pbmc <- AddMetaData(object = pbmc, metadata = predicted.labels)
@@ -1662,11 +1675,8 @@ plot2 <- DimPlot(pbmc_rna,
 
 plot1 | plot2
 
-
-
 # Finding differentially accessible peaks between cell types -------------------
 Idents(pbmc) <- pbmc$predicted.id
-
 
 # change back to working with peaks instead of gene activities
 DefaultAssay(pbmc) <- 'ATAC'
@@ -1690,27 +1700,20 @@ da_plot2 <- FeaturePlot(object = pbmc,
 
 da_plot1 | da_plot2
 
-
 # fold change between two groups of cells
 fc <- FoldChange(object = pbmc, ident.1 = 'CD4 Naive', ident.2 = 'CD14+ Monocytes')
 # order by fold change
 fc <- fc[order(fc$avg_log2FC, decreasing = TRUE),]
 head(fc)
 
-
-
 # plotting genomic regions -----------------------------------
-
-
 # set plotting order
-
 levels(pbmc) <- unique(pbmc$predicted.id)
 
 CoveragePlot(object = pbmc,
              region = rownames(da_peaks)[1],
              extend.upstream = 40000,
              extend.downstream = 20000)
-
 
 # create interactive version of these plots?
 CoverageBrowser(pbmc, region = 'CD8A')

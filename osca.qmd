@@ -1,0 +1,214 @@
+---
+title: "OSCA"
+format: html
+---
+# https://bioconductor.org/books/release/OSCA/
+# Package installation
+
+```{r, eval=FALSE}
+BiocManager::install(version = "3.22")
+BiocManager::install(remotes::local_package_deps("OSCA", dependencies=TRUE))
+devtools::install_github("duncantl/CodeDepends")
+install.packages("PCAtools")
+BiocManager::install(c(
+    "OSCA.intro",
+    "OSCA.workflows",
+    "OSCA.multisample",
+  ))
+# "OSCA.basic", "OSCA.advanced" did not install as they require dependency mbkmeans
+```
+
+# Introduction
+
+## Different experimental protocols of single-cell RNA-Seq
+![](images/protocol_diff.png)
+- **Droplet-based protocols:** 10X Genomics, inDrop and Drop-seq
+- **Plate-based protocols with UMIs:** CEL-seq and MARS-seq
+- **Plate-based protocols with reads** Smart-seq2
+- Others like sciRNA-seq
+- UMI-based methods mitigate the effects of PCR amplification noise (https://www.lexogen.com/blog/rna-lexicon-what-are-unique-molecular-identifiers-umis-and-why-do-we-need-them/)
+
+## How many cells should be captured, and to what depth they should be sequenced?
+- More cells required (for rare cell subpopulations)
+- More sequencing depth (quantify differences)
+- Typical droplet-based experiments capture 10,000 to 100,000 cells, with 1,000 to 10,000 UMIs per cell
+
+## Should we obtain more cells per sample at the cost of being able to sequence fewer samples?
+- Depends on:
+  - Sizes of the subpopulations
+  - Variability across different samples and conditions
+
+## SingleCellExperiment class
+![](images/SingleCellExperiment.png)
+
+```{r, eval=FALSE}
+# Reading counts into R---------------------------------------------------------------------
+
+# From tabular formats
+# Data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE85241
+
+library(BiocFileCache)
+bfc <- BiocFileCache(ask=FALSE)
+url <- file.path("ftp://ftp.ncbi.nlm.nih.gov/geo/series",
+    "GSE85nnn/GSE85241/suppl",
+    "GSE85241%5Fcellsystems%5Fdataset%5F4donors%5Fupdated%2Ecsv%2Egz")
+
+# Making a symbolic link so that the later code can pretend
+# that we downloaded the file into the local directory.
+muraro.fname <- bfcrpath(bfc, url)
+local.name <- URLdecode(basename(url))
+unlink(local.name)
+if (.Platform$OS.type=="windows") {
+    file.copy(muraro.fname, paste0("OSCA/datasets/", local.name))
+} else {
+    file.symlink(muraro.fname, local.name)
+}
+
+mat <- as.matrix(read.delim("OSCA/datasets/GSE85241_cellsystems_dataset_4donors_updated.csv.gz"))
+dim(mat) # number of rows, number of columns
+
+# More efficient approach is to read in the table in sparse format
+library(scuttle)
+sparse.mat <- readSparseCounts("OSCA/datasets/GSE85241_cellsystems_dataset_4donors_updated.csv.gz")
+dim(sparse.mat)
+
+# We can see that it uses less memory compared to 'mat'.
+object.size(sparse.mat)
+object.size(mat)
+
+# Data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE61533
+# When data is stored in Excel format
+library(readxl)
+all.counts <- read_excel("OSCA/datasets/GSE61533_HTSEQ_count_results.xls")
+gene.names <- all.counts$ID
+all.counts <- as.matrix(all.counts[,-1])
+rownames(all.counts) <- gene.names
+dim(all.counts)
+
+# From Cellranger output
+# For 10X Genomics data, the Cellranger software suite will produce an output directory containing counts and feature/barcode annotations
+# Data: 
+
+library(DropletTestFiles)
+cached <- getTestFile("tenx-2.1.0-pbmc4k/1.0.0/filtered.tar.gz")
+fpath <- "OSCA/datasets/tenx-2.1.0-pbmc4k"
+untar(cached, exdir=fpath)
+
+library(DropletUtils)
+sce <- read10xCounts("OSCA/datasets/tenx-2.1.0-pbmc4k/filtered_gene_bc_matrices/GRCh38")
+sce # SingleCellExperiment class
+
+# Reading multiple count matrices in a SingleCellExperiment class
+# sce <- read10xCounts(c(dirA, dirB))
+# Each directory containing barcodes, genes and matrices
+
+# From HDF5-based formats
+# Allows storage of both expression values and associated gene and cell annotations in the same file
+# Analysis can be performed without reading all data into R (Memory efficient)
+
+# Flavor: H5AD format
+library(zellkonverter)
+demo <- system.file("extdata", "krumsiek11.h5ad", package = "zellkonverter")
+sce <- readH5AD(demo)
+sce
+
+# Flavor: Loom format
+library(LoomExperiment)
+demo <- system.file("extdata", "L1_DRG_20_example.loom", package = "LoomExperiment")
+scle <- import(demo, type="SingleCellLoomExperiment")
+scle
+
+# The SingleCellExperiment Class---------------------------------------------------------------------
+library(SingleCellExperiment)
+library(BiocFileCache)
+bfc <- BiocFileCache("OSCA/datasets/raw_data", ask = FALSE)
+calero.counts <- bfcrpath(bfc, file.path("https://www.ebi.ac.uk/biostudies", 
+    "files/E-MTAB-5522/counts_Calero_20160113.tsv"))
+
+mat <- read.delim(calero.counts, header=TRUE, row.names=1, check.names=FALSE)
+
+# Only considering endogenous genes for now.
+spike.mat <- mat[grepl("^ERCC-", rownames(mat)),]
+mat <- mat[grepl("^ENSMUSG", rownames(mat)),] 
+
+# Splitting off the gene length column.
+gene.length <- mat[,1]
+mat <- as.matrix(mat[,-1]) 
+
+dim(mat)
+
+# Counts matrix can be provided as a list
+sce <- SingleCellExperiment(assays = list(counts = mat)) 
+# Check assays in SingleCellExperiment using assayNames(sce) and assays(sce)
+# Getting the assays from sce
+assay(sce, "counts")
+counts(sce)
+# Adding log-normalized counts to the same sce
+sce <- scuttle::logNormCounts(sce)
+sce
+
+# Metadata
+bfc <- BiocFileCache("OSCA/datasets", ask = FALSE)
+lun.sdrf <- bfcrpath(bfc, file.path("https://www.ebi.ac.uk/arrayexpress/files",
+    "E-MTAB-5522/E-MTAB-5522.sdrf.txt"))
+coldata <- read.delim(lun.sdrf, check.names=FALSE)
+# Only keeping the cells involved in the count matrix in 'mat'.
+coldata <- coldata[coldata[,"Derived Array Data File"]=="counts_Calero_20160113.tsv",]
+# Only keeping interesting columns, and setting the library names as the row names.
+coldata <- DataFrame(
+    genotype=coldata[,"Characteristics[genotype]"],
+    phenotype=coldata[,"Characteristics[phenotype]"],
+    spike_in=coldata[,"Factor Value[spike-in addition]"],
+    row.names=coldata[,"Source Name"]
+)
+
+# Add the metadata to SingleCellExperiment class from scratch along with the counts data
+sce <- SingleCellExperiment(assays = list(counts=mat), colData=coldata)
+# Or add the metadata to an existing SingleCellExperiment class
+sce <- SingleCellExperiment(list(counts=mat))
+colData(sce) <- coldata
+sce
+# Or each metadata column one by one
+sce <- SingleCellExperiment(list(counts=mat))
+sce$phenotype <- coldata$phenotype
+colData(sce)
+
+# It is very important to make sure that the rows of colData match the columns of count matrix.
+identical(rownames(coldata), colnames(mat))
+
+sce <- scuttle::addPerCellQC(sce)
+colData(sce)
+
+# Feature level annotation is stored in rowData slot
+rowData(sce)$Length <- gene.length
+sce <- scuttle::addPerFeatureQC(sce)
+rowData(sce)
+
+# rowRanges slot holds genomic coordinates if available in the form of a GRanges or GRangesList
+rowRanges(sce)
+# We populate the rowRanges depending on the organism and annotation used during alignment and quantification
+# Ensembl 82
+mm10.gtf <- bfcrpath(bfc, file.path("http://ftp.ensembl.org/pub/release-82",
+    "gtf/mus_musculus/Mus_musculus.GRCm38.82.gtf.gz"))
+gene.data <- rtracklayer::import(mm10.gtf)
+
+# Cleaning up the object.
+gene.data <- gene.data[gene.data$type=="gene"]
+names(gene.data) <- gene.data$gene_id
+is.gene.related <- grep("gene_", colnames(mcols(gene.data)))
+mcols(gene.data) <- mcols(gene.data)[,is.gene.related]
+
+rowRanges(sce) <- gene.data[rownames(sce)]
+rowRanges(sce)[1:10,]
+
+# Other kinds of metadata can be stored in the metadata slot
+# For example, we have some favorite genes (e.g., highly variable genes) that we want to store inside of sce for use in our analysis at a later point
+my_genes <- c("gene_1", "gene_5")
+metadata(sce) <- list(favorite_genes = my_genes)
+metadata(sce)
+# Appending more info to metadata slot
+your_genes <- c("gene_4", "gene_8")
+metadata(sce)$your_genes <- your_genes
+metadata(sce)
+# These will not be synchronized with the rows or columns when subsetting or combining as they are not related. Thus, related data must be stored in rowData() or colData()
+```

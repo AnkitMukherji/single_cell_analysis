@@ -18,7 +18,7 @@ BiocManager::install(c(
 # "OSCA.basic", "OSCA.advanced" did not install as they require dependency mbkmeans
 ```
 
-# Introduction
+# OSCA Introduction
 
 ## Different experimental protocols of single-cell RNA-Seq
 ![](images/protocol_diff.png)
@@ -41,10 +41,14 @@ BiocManager::install(c(
 ## SingleCellExperiment class
 ![](images/SingleCellExperiment.png)
 
-```{r, eval=FALSE}
-# Reading counts into R---------------------------------------------------------------------
+## scRNAseq analysis general workflow
+![](images/scRNAseq_analysis_workflow.png)
 
-# From tabular formats
+```{r, eval=FALSE}
+# Getting scRNA-seq datasets---------------------------------------------------------------------
+
+### Reading counts into R ###
+### From tabular formats ###
 # Data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE85241
 
 library(BiocFileCache)
@@ -85,7 +89,7 @@ all.counts <- as.matrix(all.counts[,-1])
 rownames(all.counts) <- gene.names
 dim(all.counts)
 
-# From Cellranger output
+### From Cellranger output ###
 # For 10X Genomics data, the Cellranger software suite will produce an output directory containing counts and feature/barcode annotations
 # Data: 
 
@@ -102,7 +106,7 @@ sce # SingleCellExperiment class
 # sce <- read10xCounts(c(dirA, dirB))
 # Each directory containing barcodes, genes and matrices
 
-# From HDF5-based formats
+### From HDF5-based formats ###
 # Allows storage of both expression values and associated gene and cell annotations in the same file
 # Analysis can be performed without reading all data into R (Memory efficient)
 
@@ -211,4 +215,162 @@ your_genes <- c("gene_4", "gene_8")
 metadata(sce)$your_genes <- your_genes
 metadata(sce)
 # These will not be synchronized with the rows or columns when subsetting or combining as they are not related. Thus, related data must be stored in rowData() or colData()
+
+# Subsetting and combining
+# Advantage: Operations on the rows or columns of the expression data are synchronized with the associated annotation
+
+first.10 <- sce[,1:10]
+colData(first.10)
+
+# Subsetting only wild-type phenotype (subsetting the colData)
+wt.only <- sce[, sce$phenotype == "wild type phenotype"]
+ncol(counts(wt.only))
+
+# Subsetting the rowData
+coding.only <- sce[rowData(sce)$gene_biotype == "protein_coding"]
+nrow(counts(coding.only))
+
+# Combining sce objects (class would take care of combining both the expression values and the associated annotation)
+sce2 <- cbind(sce, sce)
+sce2 <- rbind(sce, sce) # assuming all objects have the same column annotation values and compatible row annotation fields
+
+### Dimensionality reduction results ###
+# The reducedDims slot is specially designed to store reduced dimensionality representations of the primary data
+sce <- scater::logNormCounts(sce)
+sce <- scater::runPCA(sce) # PCA
+dim(reducedDim(sce, "PCA"))
+sce <- scater::runTSNE(sce, perplexity = 0.1) # tSNE
+head(reducedDim(sce, "TSNE"))
+
+# names of dimensionality reduction results
+reducedDims(sce)
+
+# Manual addition of dimensionality reduction results to sce
+u <- uwot::umap(t(logcounts(sce)), n_neighbors = 2)
+reducedDim(sce, "UMAP_uwot") <- u
+reducedDims(sce)
+
+### Alternative Experiments ###
+# Distinct set of features for the same set of samples/cells e.g., per-cell counts for spike-in transcripts
+# Operations need to be performed separately for these features
+spike_se <- SummarizedExperiment(list(counts=spike.mat[,-1]))
+altExp(sce, "spike") <- spike_se
+altExps(sce)
+
+# If we subset out data, the alternative experiment would also be subset
+sub <- sce[,1:2] # retain only two samples.
+altExp(sub, "spike")
+
+### Size factors ###
+sce <- scran::computeSumFactors(sce)
+summary(sizeFactors(sce))
+
+# Or manually add size factors
+sizeFactors(sce) <- scater::librarySizeFactors(sce)
+summary(sizeFactors(sce))
+
+### Column labels ###
+colLabels(sce) <- scran::clusterCells(sce, use.dimred="PCA")
+table(colLabels(sce))
+
+# Analysis overview---------------------------------------------------------------------
+
+# Typical workflow involves:
+# - Quality control to remove low-quality cells. Common metrics include the total counts per cell, the proportion of spike-in or mitochondrial reads and the number of detected features.
+# - Normalizing expression values to eliminate cell-specific biases (e.g., in capture efficiency). Log transformation is also applied to adjust for the mean-variance relationship.
+# - Feature selection using genes that are highly variable.
+# - Dimensionality reduction for data compaction and visualization.
+# - Clustering cells into groups according to similarities in their (normalized) expression profiles.
+
+library(scRNAseq)
+sce <- MacoskoRetinaData()
+
+# Quality control (using mitochondrial genes).
+library(scater)
+is.mito <- grepl("^MT-", rownames(sce))
+qcstats <- perCellQCMetrics(sce, subsets=list(Mito=is.mito))
+# Output
+#   |-- sum
+#   |-- detected
+#   |-- percent.top
+#   +-- subsets
+#       |-- Mito
+#       |   |-- sum
+#       |   |-- detected
+#       |   +-- percent
+#       +-- Sex 
+#           |-- sum
+#           |-- detected
+#           +-- percent
+# Sum - Sum of counts or the library size
+# Detected - The number of detected features
+# Percent.top - The percentage of counts in the top features (provides a measure of library complexity)
+# If subsets is specified, these statistics are also computed for each subset of features
+
+filtered <- quickPerCellQC(qcstats, percent_subsets="subsets_Mito_percent")
+sce <- sce[, !filtered$discard]
+
+# Normalization.
+sce <- logNormCounts(sce) # Adds logcounts to assays and sizeFactor to colData
+
+# Feature selection.
+library(scran)
+dec <- modelGeneVar(sce)
+hvg <- getTopHVGs(dec, prop=0.1) # Top 10 % genes
+
+# PCA.
+library(scater)
+set.seed(1234)
+sce <- runPCA(sce, ncomponents=25, subset_row=hvg) # Adds PCA components to reducedDimNames
+
+# Clustering.
+library(bluster)
+colLabels(sce) <- clusterCells(sce, use.dimred='PCA', BLUSPARAM=NNGraphParam(cluster.fun="louvain")) # Adds label to colData
+
+# Visualization.
+sce <- runUMAP(sce, dimred = 'PCA') # Adds UMAP dimensions to reducedDimNames
+plotUMAP(sce, colour_by="label")
+
+# Marker detection.
+markers <- findMarkers(sce, test.type="wilcox", direction="up", lfc=1)
+
+### Analysis when multiple batches are present ###
+sce <- SegerstolpePancreasData()
+
+# Quality control (using ERCCs).
+qcstats <- perCellQCMetrics(sce)
+filtered <- quickPerCellQC(qcstats, percent_subsets="altexps_ERCC_percent")
+sce <- sce[, !filtered$discard]
+
+# Normalization.
+sce <- logNormCounts(sce)
+
+# Feature selection, blocking on the individual of origin.
+dec <- modelGeneVar(sce, block=sce$individual)
+hvg <- getTopHVGs(dec, prop=0.1)
+
+# Batch correction.
+library(batchelor)
+set.seed(1234)
+sce <- correctExperiments(sce, batch=sce$individual, subset.row=hvg, correct.all=TRUE)
+
+# Clustering.
+colLabels(sce) <- clusterCells(sce, use.dimred='corrected')
+
+# Visualization.
+sce <- runUMAP(sce, dimred = 'corrected')
+gridExtra::grid.arrange(
+    plotUMAP(sce, colour_by="label"),
+    plotUMAP(sce, colour_by="individual"),
+    ncol=2
+)
+
+# Marker detection, blocking on the individual of origin.
+markers <- findMarkers(sce, test.type="wilcox", direction="up", lfc=1)
+```
+
+# OSCA Basics
+
+```{r, eval=FALSE}
+
 ```

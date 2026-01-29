@@ -371,6 +371,34 @@ markers <- findMarkers(sce, test.type="wilcox", direction="up", lfc=1)
 
 # OSCA Basics
 
-```{r, eval=FALSE}
+## Quality Control
+- Low-quality libraries consists of cells with low total counts, few expressed genes and high mitochondrial or spike-in proportions.
+- **Consequences:**
+    - They form their own distinct clusters.
+    - Low-quality cells introduce artificial variance that dominates PCA and HVG selection. Scaling normalization inflates expression values in low-count libraries, causing technical differences to overshadow true biological heterogeneity.
+    - Aggressive scaling of low-count libraries inflates ambient RNA signals, causing contaminating transcripts to appear falsely upregulated and misassigned to incorrect cell populations. [*Ambient transcripts are free-floating RNA in the solution. It comes from lysed cells and gets captured independently of true expression. These are present at low but similar counts across all cells.*]
+- **QC metrics:**
+    - Cells with small library sizes are of low quality as the RNA could not be caputured properly. [**Library size is defined as the total sum of counts across all features (endogenous genes) for each cell**]
+    - Any cell with few expressed genes is of poor quality as the diverse transcript population could not be captured.
+    - Any cell with high proportion of spike-in counts is of poor quality as same amount of spike-in RNA is added to each cell, thus there is a loss of endogenous RNA.
+    - Cells with high-proportion of reads mapping to mitochondrial genome is also indicative of poor quality. The reasoning is that, in the presence of modest damage, the holes in the cell membrane permit efflux of individual transcript molecules but are too small to allow mitochondria to escape, leading to a relative enrichment of mitochondrial transcripts.
+    - **perCellQCMetrics()** output:
+        - *sum*: the total count for each cell
+        - *detected*: number of detected genes
+        - *subsets_Mito_percent*: percentage of reads mapped to mitochondrial transcripts
+        - *altexps_ERCC_percent*: percentage of reads mapped to ERCC transcripts
 
+```{r, eval=FALSE}
+library(scRNAseq)
+sce.416b <- LunSpikeInData(which="416b")
+sce.416b$block <- factor(sce.416b$block)
+
+library(SingleCellExperiment)
+# Identifying the mitochondrial transcripts in our SingleCellExperiment.
+location <- rowRanges(sce.416b)
+is.mito <- any(seqnames(location)=="MT")
+
+library(scuttle)
+df <- perCellQCMetrics(sce.416b, subsets=list(Mito=is.mito))
+summary(df$sum)
 ```

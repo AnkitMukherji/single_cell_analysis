@@ -284,6 +284,8 @@ table(colLabels(sce))
 
 library(scRNAseq)
 sce <- MacoskoRetinaData()
+saveRDS(sce, "OSCA/datasets/OSCA_Introduction/sce.macosko.retina.rds")
+sce <- readRDS("OSCA/datasets/OSCA_Introduction/sce.macosko.retina.rds")
 
 # Quality control (using mitochondrial genes).
 library(scater)
@@ -391,6 +393,8 @@ markers <- findMarkers(sce, test.type="wilcox", direction="up", lfc=1)
 ```{r, eval=FALSE}
 library(scRNAseq)
 sce.416b <- LunSpikeInData(which="416b")
+saveRDS(sce.416b, "OSCA/datasets/OSCA_Basics/sce.416b.rds")
+sce.416b <- readRDS("OSCA/datasets/OSCA_Basics/sce.416b.rds")
 sce.416b$block <- factor(sce.416b$block)
 
 library(SingleCellExperiment)
@@ -503,3 +507,130 @@ marked$discard <- reasons$discard
 ```
 
 ## Normalization
+- Aims to remove technical differences such that they do not interfere with comparisons of the expression profiles between cells.
+- **Scaling normalization:** Dividing all counts of each cell by a cell-specific scaling factor, called size factor
+- **Composition biases:**
+    - Removal is more important in bulk-RNA seq using *estimateSizeFactorsFromMatrix()* in DESeq2 and *calcNormFactors()* in EdgeR
+    - *Example:* Consider two cells where a single gene X is upregulated in one cell A compared to the other cell B. This upregulation means that either (i) more sequencing resources are devoted to X in A, thus decreasing coverage of all other non-DE genes when the total library size of each cell is experimentally fixed (e.g., due to library quantification); or (ii) the library size of A increases when X is assigned more reads or UMIs, increasing the library size factor and yielding smaller normalized expression values for all non-DE genes. In both cases, the net effect is that non-DE genes in A will incorrectly appear to be downregulated compared to B.
+- **Normalization by Deconvolution:**
+    - Assumption: Most endogenous genes are not DE within clusters, so deviations reflect technical bias.
+- **Spike-in normalization:** 
+    - Based on the assumption that the spike-in transcripts are:
+        - Added at a constant level to each cell
+        - Respond to biases in the same relative manner as endogenous genes
+    - Bias is removed by equalizing spike-in coverage across cells by scaling with spike-in size factors
+    - Practically used when differences in the total RNA content of individual cells are of interest
+    - Different from other normalization methods as they interpret any change in the total RNA content as bias and remove them
+    - Therefore, they do not correct for composition bias caused by differential expression of endogenous genes
+
+```{r}
+library(scRNAseq)
+sce.zeisel <- ZeiselBrainData()
+saveRDS(sce.zeisel, "OSCA/datasets/OSCA_Basics/sce.zeisel.rds")
+sce.zeisel <- readRDS("OSCA/datasets/OSCA_Basics/sce.zeisel.rds")
+
+library(scater)
+# Sum together expression values (by default, counts) for each feature set in each cell of a SummarizedExperiment object.
+sce.zeisel <- aggregateAcrossFeatures(sce.zeisel, id=sub("_loc[0-9]+$", "", rownames(sce.zeisel)))
+
+library(org.Mm.eg.db)
+# Maps gene names to ensembl ids
+rowData(sce.zeisel)$Ensembl <- mapIds(org.Mm.eg.db, keys=rownames(sce.zeisel), keytype="SYMBOL", column="ENSEMBL")
+
+stats <- perCellQCMetrics(sce.zeisel, subsets=list(Mt=rowData(sce.zeisel)$featureType=="mito"))
+qc <- quickPerCellQC(stats, percent_subsets=c("altexps_ERCC_percent", "subsets_Mt_percent"))
+sce.zeisel <- sce.zeisel[,!qc$discard]
+
+## Library size normalization--------------------------------------------------------------------
+library(scater)
+# The value of library size is assumed to scale with any cell-specific biases
+# The “library size factor” for each cell is directly proportional to its library size
+# The library size factor proportionality constant is defined such that the mean size factor across all cells is equal to 1
+# It removes any imbalance i.e., any upregulation for a subset of genes is cancelled out by the same magnitude of downregulation in a different subset of genes
+lib.sf.zeisel <- librarySizeFactors(sce.zeisel)
+summary(lib.sf.zeisel)
+hist(log10(lib.sf.zeisel), xlab="Log10[Size factor]", col='grey80') # the library size factors differ by 10-fold across cells
+# As cells in scRNA-seq do not have balanced expression, the library size normalization may not yield accurate normalized expression values
+# Also, normalization accuracy is not a major consideration for exploratory scRNA-seq data analyses
+# Composition biases do not usually affect the separation of clusters, only the magnitude, and to a lesser extent, direction of the log-fold changes between clusters or cell types
+# Library size normalization is sufficient where the aim is to identify clusters and the top markers that define each cluster
+
+## Normalization by deconvolution----------------------------------------------------------------
+# Normalization of scRNA-seq data using bulk-normalization methods is problematic due to dominance of low and zero counts.
+# To overcome this, pooled counts from many cells are used to increase the size of the counts for accurate size factor estimation. Pool-based size factors are then “deconvolved” into cell-based factors for normalization of each cell’s expression profile. This is performed using the calculateSumFactors()
+library(scran)
+set.seed(100)
+# Clustering similar cells based on their expression profiles, using either log-expression values or ranks.
+# Cells in each cluster are normalized separately and the size-factors are rescaled to be comparable across clusters
+# This avoids the assumption that most genes are non-DE across the entire population, but only non-DE between pairs of clusters (weaker assumption for highly heterogeneous population)
+clust.zeisel <- quickCluster(sce.zeisel)
+table(clust.zeisel)
+deconv.sf.zeisel <- calculateSumFactors(sce.zeisel, cluster=clust.zeisel)
+summary(deconv.sf.zeisel)
+# deconvolution size factors exhibit cell type-specific deviations from the library size factors
+plot(lib.sf.zeisel, deconv.sf.zeisel, xlab="Library size factor",
+    ylab="Deconvolution size factor", log='xy', pch=16,
+    col=as.integer(factor(sce.zeisel$level1class)))
+abline(a=0, b=1, col="red")
+
+## Normalization by spike-ins---------------------------------------------------------------------
+library(scRNAseq)
+sce.richard <- RichardTCellData()
+saveRDS(sce.richard, "OSCA/datasets/OSCA_Basics/sce.richard.rds")
+sce.richard <- readRDS("OSCA/datasets/OSCA_Basics/sce.richard.rds")
+sce.richard <- sce.richard[,sce.richard$`single cell quality`=="OK"]
+sce.richard
+# Computing spike-in size factors for each cell
+# Removes any differences in spike-in coverage across cells
+sce.richard <- computeSpikeFactors(sce.richard, "ERCC")
+summary(sizeFactors(sce.richard))
+
+# Positive correlation between spike-in size factors and deconvolution size factors
+# Indicates that both are capturing similar technical biases in sequencing depth and capturing efficiency
+# Increasing stimulation of T-cell receptor activity in terms of increasing affinity or time 
+# results in decrease in spike-factors relative to library size factors
+# It implies that there is an increase in biosynthetic activity and total RNA content during stimulation
+# This reduces the relative spike-in coverage in each library (decreasing the spike-in size factors)
+# And, increases the coverage of endogenous genes (increasing the library size factors)
+
+to.plot <- data.frame(
+    DeconvFactor=calculateSumFactors(sce.richard),
+    SpikeFactor=sizeFactors(sce.richard),
+    Stimulus=sce.richard$stimulus, 
+    Time=sce.richard$time
+)
+
+ggplot(to.plot, aes(x=DeconvFactor, y=SpikeFactor, color=Time)) +
+    geom_point() + facet_wrap(~Stimulus) + scale_x_log10() + 
+    scale_y_log10() + geom_abline(intercept=0, slope=1, color="red")
+
+# Applying spike-in normalization or deconvolution normalization has separate interpretation
+# If the spike-in size factors were applied to the counts, the expression values in unstimulated cells would be scaled up while expression in stimulated cells would be scaled down.
+# If the deconvolution size factors were applied to the counts, it would produce an opposite effect
+
+# logNormCounts():
+# Divides the count for each gene/spike-in transcript with the appropriate size factor for that cell
+# Log transforms the normalized value
+# Creates a new assay called "logcounts"
+sce.richard.deconv <- logNormCounts(sce.richard, size_factors=to.plot$DeconvFactor)
+sce.richard.spike <- logNormCounts(sce.richard, size_factors=to.plot$SpikeFactor)
+
+gridExtra::grid.arrange(
+    plotExpression(sce.richard.deconv, x="stimulus", 
+        colour_by="time", features="ENSMUSG00000092341") + 
+        theme(axis.text.x = element_text(angle = 90)) + 
+        ggtitle("After deconvolution"),
+    plotExpression(sce.richard.spike, x="stimulus", 
+        colour_by="time", features="ENSMUSG00000092341") + 
+        theme(axis.text.x = element_text(angle = 90)) +
+        ggtitle("After spike-in normalization"),
+    ncol=2
+)
+
+## Scaling and log-transforming--------------------------------------------------------------------
+set.seed(100)
+clust.zeisel <- quickCluster(sce.zeisel) 
+sce.zeisel <- computeSumFactors(sce.zeisel, cluster=clust.zeisel, min.mean=0.1)
+sce.zeisel <- logNormCounts(sce.zeisel)
+assayNames(sce.zeisel)
+```

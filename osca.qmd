@@ -523,7 +523,7 @@ marked$discard <- reasons$discard
     - Different from other normalization methods as they interpret any change in the total RNA content as bias and remove them
     - Therefore, they do not correct for composition bias caused by differential expression of endogenous genes
 
-```{r}
+```{r, eval=FALSE}
 library(scRNAseq)
 sce.zeisel <- ZeiselBrainData()
 saveRDS(sce.zeisel, "OSCA/datasets/OSCA_Basics/sce.zeisel.rds")
@@ -633,4 +633,170 @@ clust.zeisel <- quickCluster(sce.zeisel)
 sce.zeisel <- computeSumFactors(sce.zeisel, cluster=clust.zeisel, min.mean=0.1)
 sce.zeisel <- logNormCounts(sce.zeisel)
 assayNames(sce.zeisel)
+```
+
+## Feature selection
+- To characterize heterogeneity across cells (using clustering and dimensionality reduction), those genes should be selected that contain useful information about the biology of the system while removing genes that contain random noise. This also improves computational efficiency.
+- Requires modelling of the mean-variance relationship. Calculating variance from log-transformed counts of each gene per cell is driven more by the abundance of the gene than by its biological heterogeneity. Therefore, the variance of the gene has to be modelled with respect to abundance across all genes.
+
+```{r, eval=FALSE}
+library(DropletTestFiles)
+raw.path <- getTestFile("tenx-2.1.0-pbmc4k/1.0.0/raw.tar.gz")
+out.path <- file.path(tempdir(), "pbmc4k")
+untar(raw.path, exdir=out.path)
+
+library(DropletUtils)
+# also saved in OSCA\datasets\OSCA_Basics
+fname <- file.path(out.path, "raw_gene_bc_matrices/GRCh38")
+sce.pbmc <- read10xCounts(fname, col.names=TRUE)
+saveRDS(sce.pbmc, "OSCA/datasets/OSCA_Basics/sce.pbmc.rds")
+sce.pbmc <- readRDS("OSCA/datasets/OSCA_Basics/sce.pbmc.rds")
+
+# gene-annotation
+# Substituting ensembl ids with gene names
+library(scater)
+rownames(sce.pbmc) <- uniquifyFeatureNames(rowData(sce.pbmc)$ID, rowData(sce.pbmc)$Symbol)
+
+library(EnsDb.Hsapiens.v86)
+# Get the chromosome names based on the gene names
+location <- mapIds(EnsDb.Hsapiens.v86, keys=rowData(sce.pbmc)$ID, column="SEQNAME", keytype="GENEID")
+
+# cell-detection
+set.seed(100)
+# Distinguish between droplets containing cells and ambient RNA in a droplet-based single-cell RNA sequencing experiment
+# Columns:
+# Total: Integer, the total UMI count for each barcode.
+# LogProb: Numeric, the log-probability of observing the barcode's count vector under the null model.
+# PValue: Numeric, the Monte Carlo p-value against the null model.
+# Limited: Logical, indicating whether a lower p-value could be obtained by increasing niters.
+# FDR
+e.out <- emptyDrops(counts(sce.pbmc))
+sce.pbmc <- sce.pbmc[,which(e.out$FDR <= 0.001)]
+
+# quality-control
+stats <- perCellQCMetrics(sce.pbmc, subsets=list(Mito=which(location=="MT")))
+high.mito <- isOutlier(stats$subsets_Mito_percent, type="higher")
+sce.pbmc <- sce.pbmc[,!high.mito]
+
+# normalization
+library(scran)
+set.seed(1000)
+clusters <- quickCluster(sce.pbmc)
+sce.pbmc <- computeSumFactors(sce.pbmc, cluster=clusters)
+sce.pbmc <- logNormCounts(sce.pbmc)
+
+## Quantifying per-gene variation--------------------------------------------------------------------------
+library(scran)
+# Computes the variance of the log-normalized expression values (i.e., “log-counts” ) for each gene across all cells
+# Columns:
+# mean: Mean normalized log-expression per gene.
+# total: Variance of the normalized log-expression per gene.
+# bio: Biological component of the variance.
+# tech: Technical component of the variance.
+# p.value, FDR: Raw and adjusted p-values for the test against the null hypothesis that bio<=0.
+dec.pbmc <- modelGeneVar(sce.pbmc)
+
+# Visualizing the fit:
+fit.pbmc <- metadata(dec.pbmc)
+plot(fit.pbmc$mean, fit.pbmc$var, xlab="Mean of log-expression",
+    ylab="Variance of log-expression")
+curve(fit.pbmc$trend(x), col="dodgerblue", add=TRUE, lwd=2)
+# The fitted curve represents the expected variance in genes due to uninteresting processes = Technical component
+# If a gene lies above the fitted curve, it represents extra variance not explained by noise = Biological component
+# The extra variance reflects cell-type differences and heterogeneity
+
+# Ordering by most interesting genes for inspection.
+dec.pbmc[order(dec.pbmc$bio, decreasing=TRUE),]
+
+## Quantifying technical noise-----------------------------------------------------------------------------
+# Scenario: Many genes at a particular abundance are affected by a biological process
+# For example, strong upregulation of cell type-specific genes may result in an enrichment of HVGs at high abundances.
+# This would inflate the fitted trend in that abundance interval and compromise the detection of the relevant genes.
+# In such cases, fitting a mean-dependent trend to the variance of the spike-in transcripts can resolve the problem as spike-ins are not affected by biological variation
+sce.416b <- readRDS("OSCA/datasets/OSCA_Basics/sce.416b.rds")
+dec.spike.416b <- modelGeneVarWithSpikes(sce.416b, "ERCC")
+dec.spike.416b[order(dec.spike.416b$bio, decreasing=TRUE),]
+
+# Each point represents a gene (black) or spike-in transcript (red) and the blue line represents the trend fitted to all spike-ins
+plot(dec.spike.416b$mean, dec.spike.416b$total, xlab="Mean of log-expression",
+    ylab="Variance of log-expression")
+fit.spike.416b <- metadata(dec.spike.416b)
+points(fit.spike.416b$mean, fit.spike.416b$var, col="red", pch=16)
+curve(fit.spike.416b$trend(x), col="dodgerblue", add=TRUE, lwd=2)
+
+# In the absence of spike-in transcripts, a trend can be created by making some distributional assumptions about the noise
+set.seed(0010101)
+dec.pois.pbmc <- modelGeneVarByPoisson(sce.pbmc)
+dec.pois.pbmc <- dec.pois.pbmc[order(dec.pois.pbmc$bio, decreasing=TRUE),]
+head(dec.pois.pbmc)
+
+plot(dec.pois.pbmc$mean, dec.pois.pbmc$total, pch=16, xlab="Mean of log-expression",
+    ylab="Variance of log-expression")
+curve(metadata(dec.pois.pbmc)$trend(x), col="dodgerblue", add=TRUE)
+
+# Trends based purely on technical noise tend to yield large biological components for highly-expressed genes
+# This includes “house-keeping” genes which are considered uninteresting for characterizing cellular heterogeneity
+# This suggests that a more accurate noise model does not necessarily yield a better ranking of HVGs
+# Although, house-keeping genes showing a large biological component indicates that there is strong variation across cells that may not be completely irrelevant
+
+## Handling batch effects----------------------------------------------------------------------------------
+# We are usually not interested in HVGs that are driven by batch effects; instead, we want to focus on genes that are highly variable within each batch (specified using the block parameter)
+dec.block.416b <- modelGeneVarWithSpikes(sce.416b, "ERCC", block=sce.416b$block)
+head(dec.block.416b[order(dec.block.416b$bio, decreasing=TRUE),1:6])
+
+# The analysis of each block yields estimates of the biological and technical components for each gene, which are averaged across blocks to take advantage of information from multiple batches.
+# Minor differences between batches are observed
+par(mfrow=c(1,2))
+blocked.stats <- dec.block.416b$per.block
+for (i in colnames(blocked.stats)) {
+    current <- blocked.stats[[i]]
+    plot(current$mean, current$total, main=i, pch=16, cex=0.5,
+        xlab="Mean of log-expression", ylab="Variance of log-expression")
+    curfit <- metadata(current)
+    points(curfit$mean, curfit$var, col="red", pch=16)
+    curve(curfit$trend(x), col='dodgerblue', add=TRUE, lwd=2) 
+}
+
+# The wave-like shape is typical of the mean-variance trend for log-expression values
+
+## Selecting highly variable genes--------------------------------------------------------------------------
+# Taking the top 1000 genes here:
+hvg.pbmc.var <- getTopHVGs(dec.pbmc, n=1000)
+str(hvg.pbmc.var)
+
+# Choosing n:
+# A larger subset will reduce the risk of discarding interesting biological signal by retaining more potentially relevant genes, at the cost of increasing noise from irrelevant genes that might obscure said signal. 
+# It is difficult to determine the optimal trade-off for any given application as noise in one context may be useful signal in another.
+# We should lower n for less heterogeneous datasets, retaining most of the biological signal without unnecessary noise from irrelevant genes. 
+# Conversely, more heterogeneous datasets should use larger values of n to preserve secondary factors of variation beyond those driving the most obvious HVGs.
+
+## Putting it all together-----------------------------------------------------------------------------------
+# Selecting the top 10% of genes with the highest biological components.
+dec.pbmc <- modelGeneVar(sce.pbmc)
+chosen <- getTopHVGs(dec.pbmc, prop=0.1)
+str(chosen)
+
+# Different ways of using HVG selection:
+# 1. Subset the SingleCellExperiment to only retain our selection of HVGs
+sce.pbmc.hvg <- sce.pbmc[chosen,]
+dim(sce.pbmc.hvg)
+
+# 2. Keep the original SingleCellExperiment object and specify the genes to use for downstream functions
+library(scater)
+sce.pbmc <- runPCA(sce.pbmc, subset_row=chosen)
+reducedDimNames(sce.pbmc)
+
+rowSubset(sce.pbmc) <- chosen # stored in the default 'subset'.
+rowSubset(sce.pbmc, "HVGs.more") <- getTopHVGs(dec.pbmc, prop=0.2)
+rowSubset(sce.pbmc, "HVGs.less") <- getTopHVGs(dec.pbmc, prop=0.3)
+colnames(rowData(sce.pbmc))
+
+# 3. Using the “alternative Experiment” system in the SingleCellExperiment class
+altExp(sce.pbmc.hvg, "original") <- sce.pbmc
+altExpNames(sce.pbmc.hvg)
+# No need for explicit subset_row= specification in downstream operations.
+sce.pbmc.hvg <- runPCA(sce.pbmc.hvg)
+
+# Recover original data:
+sce.pbmc.original <- altExp(sce.pbmc.hvg, "original", withColData=TRUE)
 ```

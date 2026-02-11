@@ -800,3 +800,125 @@ sce.pbmc.hvg <- runPCA(sce.pbmc.hvg)
 # Recover original data:
 sce.pbmc.original <- altExp(sce.pbmc.hvg, "original", withColData=TRUE)
 ```
+
+## Dimensionality reduction
+- **Clustering** aims to identify cells with similar transcriptomic profiles by computing Euclidean distances across genes. Each individual gene represents a dimension of the data.
+- As different genes are correlated, we need not store separate information for individual genes, but can instead compress multiple features into a single dimension e.g., an "eigengene".
+- This reduces computational work in downstream analyses like clustering, as calculations only need to be performed for a few dimensions rather than thousands of genes; reduces noise by averaging across multiple genes to obtain a more precise representation of the patterns in the data; and enables effective plotting of the data.
+- **Principal components analysis (PCA)**
+    - PCA is a linear technique, i.e., only variation along a line in high-dimensional space is captured by each PC.
+    - A low-rank approximation formed from the top PCs is the optimal approximation of the original data for a given matrix rank. The Euclidean distances between cells in PC space can be treated as an approximation of the same distances in the original dataset.
+    - Discovers axes in high-dimensional space that capture the largest amount of variation.
+    - The first axis (or “principal component”, PC) is chosen such that it maximizes this variance. The next PC is chosen such that it is orthogonal to the first and captures the greatest remaining amount of variation, and so on.
+    - The top PCs capture the dominant factors of heterogeneity in the data set.
+    - Random technical or biological noise should mostly be concentrated in the later PCs.
+    - The choice of the number of PCs is a decision that is analogous to the choice of the number of HVGs to use. Using more PCs will retain more biological signal at the cost of including more noise that might mask said signal.
+- **t-stochastic neighbor embedding (t-SNE)**
+    - Attempts to find a low-dimensional representation of the data that preserves the distances between each point and its neighbors in the high-dimensional space.
+    - It is not restricted to linear transformations, nor is it obliged to accurately represent distances between distant populations.
+    - Positions cannot be used to determine relationships between distant clusters.
+    - Disadvantage: 
+        - Computationally intensive than other visualization methods
+        - Requires the user to be aware of additional parameters (*http://distill.pub/2016/misread-tsne/*)
+        - Repeating the visualization several times to ensure that the results are representative
+- **Uniform manifold approximation and projection (UMAP)**
+    - Attempts to find a low-dimensional representation of the data that preserves the distances between each point and its neighbors in the high-dimensional space.
+    - UMAP hyperparameters affect the visualization (*https://umap-learn.readthedocs.io/en/latest/parameters.html*) mainly,
+        - the number of neighbors (n_neighbors)
+        - the minimum distance between embedded points (min_dist)
+        - If these values are too low, random noise will be incorrectly treated as high-resolution structure, while values that are too high will discard fine structure altogether in favor of obtaining an accurate overview of the entire dataset.
+    - Difference from t-SNE: 
+        - Represented by different graph weighting equations.
+        - Tends to have more compact visual clusters with more empty space between them.
+        - Attempts to preserve more global structure (this reduces resolution within each visual cluster)
+        - Much faster
+- All the reduced dimension representations should be restricted for visualization and use the higher-rank representation for any quantitative analyses.
+- The reduced dimension representations attempts to ensure that each cell’s nearest neighbors in the input high-dimensional space are still its neighbors in the output two-dimensional embedding. However, less can be said about the distances between non-neighboring cells; there is no guarantee that large distances are faithfully recapitulated in the embedding, given the distortions necessary for this type of dimensionality reduction.
+
+```{r, eval=FALSE}
+library(scRNAseq)
+sce.zeisel <- ZeiselBrainData()
+sce.zeisel <- readRDS("OSCA/datasets/OSCA_Basics/sce.zeisel.rds")
+
+library(scater)
+sce.zeisel <- aggregateAcrossFeatures(sce.zeisel, id=sub("_loc[0-9]+$", "", rownames(sce.zeisel)))
+
+# gene-annotation
+library(org.Mm.eg.db)
+rowData(sce.zeisel)$Ensembl <- mapIds(org.Mm.eg.db, keys=rownames(sce.zeisel), keytype="SYMBOL", column="ENSEMBL")
+
+# quality-control
+stats <- perCellQCMetrics(sce.zeisel, subsets=list(Mt=rowData(sce.zeisel)$featureType=="mito"))
+qc <- quickPerCellQC(stats, percent_subsets=c("altexps_ERCC_percent", "subsets_Mt_percent"))
+sce.zeisel <- sce.zeisel[,!qc$discard]
+
+# normalization
+library(scran)
+set.seed(1000)
+clusters <- quickCluster(sce.zeisel)
+sce.zeisel <- computeSumFactors(sce.zeisel, cluster=clusters) 
+sce.zeisel <- logNormCounts(sce.zeisel)
+
+# variance-modelling
+dec.zeisel <- modelGeneVarWithSpikes(sce.zeisel, "ERCC")
+top.hvgs <- getTopHVGs(dec.zeisel, prop=0.1)
+
+## Principal components analysis (PCA)---------------------------------------------------------------------------------
+library(scran)
+top.zeisel <- getTopHVGs(dec.zeisel, n=2000)
+
+set.seed(100)
+# PCA on the log-normalized expression values
+# By default, fixedPCA() will compute the first 50 PCs and store them in the reducedDims() of the output SingleCellExperiment object
+# While PCA is robust to random noise, an excess of it may cause the earlier PCs to capture noise instead of biological structure
+sce.zeisel <- fixedPCA(sce.zeisel, subset.row=top.zeisel)
+reducedDimNames(sce.zeisel)
+dim(reducedDim(sce.zeisel, "PCA"))
+
+# For large data sets, greater efficiency is obtained by using approximate SVD algorithms that only compute the top PCs
+# We can explicitly specify the SVD algorithm to use by passing an BiocSingularParam object to the BSPARAM= argument
+# Many of these approximate algorithms are based on randomization and thus require set.seed() to obtain reproducible results.
+library(BiocSingular)
+set.seed(1000)
+sce.zeisel <- fixedPCA(sce.zeisel, subset.row=top.zeisel, BSPARAM=RandomParam(), name="randomized")
+reducedDimNames(sce.zeisel)
+
+## Choosing the number of PCs----------------------------------------------------------------------------------
+percent.var <- attr(reducedDim(sce.zeisel), "percentVar")
+plot(percent.var, log="y", xlab="PC", ylab="Variance explained (%)")
+
+## Visualizing the PCs------------------------------------------------------------------------------------------
+library(scater)
+plotReducedDim(sce.zeisel, dimred="PCA", colour_by="level1class")
+plotReducedDim(sce.zeisel, dimred="PCA", ncomponents=4, colour_by="level1class")
+
+## Non-linear methods for visualization-------------------------------------------------------------------------
+## t-stochastic neighbor embedding (t-SNE)
+set.seed(00101001101)
+sce.zeisel <- runTSNE(sce.zeisel, dimred="PCA") # Perform t-SNE calculations on top PCs
+plotReducedDim(sce.zeisel, dimred="TSNE", colour_by="level1class")
+
+# The “perplexity” is an important parameter that determines the granularity of the visualization
+# Low perplexities will favor resolution of finer structure, possibly to the point that the visualization is compromised by random noise. Thus, it is advisable to test different perplexity values to ensure that the choice of perplexity does not drive the interpretation of the plot.
+set.seed(100)
+sce.zeisel <- runTSNE(sce.zeisel, dimred="PCA", perplexity=5)
+out5 <- plotReducedDim(sce.zeisel, dimred="TSNE",
+    colour_by="level1class") + ggtitle("perplexity = 5")
+
+set.seed(100)
+sce.zeisel <- runTSNE(sce.zeisel, dimred="PCA", perplexity=20)
+out20 <- plotReducedDim(sce.zeisel, dimred="TSNE",
+    colour_by="level1class") + ggtitle("perplexity = 20")
+
+set.seed(100)
+sce.zeisel <- runTSNE(sce.zeisel, dimred="PCA", perplexity=80)
+out80 <- plotReducedDim(sce.zeisel, dimred="TSNE", 
+    colour_by="level1class") + ggtitle("perplexity = 80")
+
+gridExtra::grid.arrange(out5, out20, out80, ncol=3)
+
+## Uniform manifold approximation and projection (UMAP)
+set.seed(1100101001)
+sce.zeisel <- runUMAP(sce.zeisel, dimred="PCA")
+plotReducedDim(sce.zeisel, dimred="UMAP", colour_by="level1class")
+```

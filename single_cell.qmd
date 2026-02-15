@@ -1,8 +1,14 @@
 ---
 title: "Single_Cell_Analysis"
-author: "Ankit"
 format: html
 ---
+
+## Datasets stored in OneDrive
+```{r, eval=FALSE}
+# Change path as necessary
+output_path = "C:/Users/ankit/OneDrive - Savitribai Phule Pune University/single_cell_analysis"
+setwd(output_path)
+```
 
 ## Difference between bulk and single-cell RNA-seq data analysis
 ![](images/single_vs_bulk.png)
@@ -64,10 +70,10 @@ library(Seurat)
 library(SeuratDisk)
 
 # .RDS format
-rds_obj <- readRDS('ependymal_cells.rds')
+rds_obj <- readRDS('different_data_types/ependymal_cells.rds')
 
 # 10X CellRanger .HDF5 format 
-hdf5_obj <- Read10X_h5(filename = "20k_PBMC_3p_HT_nextgem_Chromium_X_filtered_feature_bc_matrix.h5",
+hdf5_obj <- Read10X_h5(filename = "different_data_types/20k_PBMC_3p_HT_nextgem_Chromium_X_filtered_feature_bc_matrix.h5",
            use.names = TRUE,
            unique.features = TRUE)
 seurat_hdf5 <- CreateSeuratObject(counts = hdf5_obj)
@@ -84,10 +90,10 @@ seurat_loom <- as.Seurat(loom_oj)
 
 # .h5ad format 
 # step 1: convert AnnData object to an h5Seurat file
-Convert("adata_SS2_for_download.h5ad", dest = "h5seurat", overwrite = TRUE)
+Convert("different_data_types/adata_SS2_for_download.h5ad", dest = "h5seurat", overwrite = TRUE)
 
 # step 2: Load h5Seurat file into a Seurat object 
-seurat_anndata <- LoadH5Seurat("adata_SS2_for_download.h5seurat")
+seurat_anndata <- LoadH5Seurat("different_data_types/adata_SS2_for_download.h5seurat")
 ```
 
 # Script to perform standard workflow steps to analyze single cell RNA-Seq data
@@ -99,10 +105,11 @@ seurat_anndata <- LoadH5Seurat("adata_SS2_for_download.h5seurat")
 ```{r, eval=FALSE}
 # load libraries
 library(Seurat)
+# install.packages("tidyverse")
 library(tidyverse)
 
 # Load the NSCLC dataset
-nsclc.sparse.m <- Read10X_h5(filename = '20k_NSCLC_DTC_3p_nextgem_Multiplex_count_raw_feature_bc_matrix.h5')
+nsclc.sparse.m <- Read10X_h5(filename = 'different_data_types/20k_NSCLC_DTC_3p_nextgem_Multiplex_count_raw_feature_bc_matrix.h5')
 str(nsclc.sparse.m)
 cts <-  nsclc.sparse.m$`Gene Expression`
 
@@ -728,8 +735,9 @@ FeaturePlot(ifnb_harmony, features = c('FCGR3A', 'AIF1', 'IFIT1'), split.by = 's
 
 ## Dataset: https://experimenthub.bioconductor.org/fetch/2259
 ```{r, eval=FALSE}
-# BiocManager::install("ExperimentHub")
+# BiocManager::install(c("ExperimentHub", "DESeq2", "SingleCellExperiment"))
 library(ExperimentHub)
+library(SummarizedExperiment)
 library(Seurat)
 library(DESeq2)
 library(tidyverse)
@@ -1476,7 +1484,7 @@ hpca.mapping <- read.delim(hpca.fle, header = F)
 ```{r, eval=FALSE}
 # Vignette: https://stuartlab.org/signac/articles/pbmc_vignette
 
-# BiocManager::install(c('GenomeInfoDb', 'Rsamtools', ''BiocParallel', 'biovizBase'))
+# BiocManager::install(c('GenomeInfoDb', 'Rsamtools', 'BiocParallel', 'biovizBase'))
 # remotes::install_github("stuart-lab/signac", ref="develop")
 # install.packages("Matrix", type = "source")
 # install.packages("irlba", type = "source")

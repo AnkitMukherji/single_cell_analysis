@@ -8,3 +8,5 @@
 !renv.lock
 !renv/
 !renv/**
+/.quarto/
+**/*.quarto_ipynb

@@ -3,19 +3,29 @@ title: "OSCA"
 format: html
 ---
 # https://bioconductor.org/books/release/OSCA/
+
+# Datasets stored in OneDrive
+```{r, eval=FALSE}
+# Change path as necessary
+output_path = "C:/Users/ankit/OneDrive - Savitribai Phule Pune University/single_cell_analysis"
+setwd(output_path)
+```
+
 # Package installation
 
 ```{r, eval=FALSE}
 BiocManager::install(version = "3.22")
 BiocManager::install(remotes::local_package_deps("OSCA", dependencies=TRUE))
+BiocManager::install("drisso/mbkmeans")
 devtools::install_github("duncantl/CodeDepends")
 install.packages("PCAtools")
 BiocManager::install(c(
     "OSCA.intro",
+    "OSCA.basic",
+    "OSCA.advanced",
     "OSCA.workflows",
-    "OSCA.multisample",
+    "OSCA.multisample"
   ))
-# "OSCA.basic", "OSCA.advanced" did not install as they require dependency mbkmeans
 ```
 
 # OSCA Introduction
@@ -63,17 +73,17 @@ muraro.fname <- bfcrpath(bfc, url)
 local.name <- URLdecode(basename(url))
 unlink(local.name)
 if (.Platform$OS.type=="windows") {
-    file.copy(muraro.fname, paste0("OSCA/datasets/", local.name))
+    file.copy(muraro.fname, paste0("OSCA_datasets/", local.name))
 } else {
     file.symlink(muraro.fname, local.name)
 }
 
-mat <- as.matrix(read.delim("OSCA/datasets/GSE85241_cellsystems_dataset_4donors_updated.csv.gz"))
+mat <- as.matrix(read.delim("OSCA_datasets/GSE85241_cellsystems_dataset_4donors_updated.csv.gz"))
 dim(mat) # number of rows, number of columns
 
 # More efficient approach is to read in the table in sparse format
 library(scuttle)
-sparse.mat <- readSparseCounts("OSCA/datasets/GSE85241_cellsystems_dataset_4donors_updated.csv.gz")
+sparse.mat <- readSparseCounts("OSCA_datasets/GSE85241_cellsystems_dataset_4donors_updated.csv.gz")
 dim(sparse.mat)
 
 # We can see that it uses less memory compared to 'mat'.
@@ -83,7 +93,7 @@ object.size(mat)
 # Data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE61533
 # When data is stored in Excel format
 library(readxl)
-all.counts <- read_excel("OSCA/datasets/GSE61533_HTSEQ_count_results.xls")
+all.counts <- read_excel("OSCA_datasets/GSE61533_HTSEQ_count_results.xls")
 gene.names <- all.counts$ID
 all.counts <- as.matrix(all.counts[,-1])
 rownames(all.counts) <- gene.names
@@ -95,11 +105,11 @@ dim(all.counts)
 
 library(DropletTestFiles)
 cached <- getTestFile("tenx-2.1.0-pbmc4k/1.0.0/filtered.tar.gz")
-fpath <- "OSCA/datasets/tenx-2.1.0-pbmc4k"
+fpath <- "OSCA_datasets/tenx-2.1.0-pbmc4k"
 untar(cached, exdir=fpath)
 
 library(DropletUtils)
-sce <- read10xCounts("OSCA/datasets/tenx-2.1.0-pbmc4k/filtered_gene_bc_matrices/GRCh38")
+sce <- read10xCounts("OSCA_datasets/tenx-2.1.0-pbmc4k/filtered_gene_bc_matrices/GRCh38")
 sce # SingleCellExperiment class
 
 # Reading multiple count matrices in a SingleCellExperiment class
@@ -125,7 +135,7 @@ scle
 # The SingleCellExperiment Class---------------------------------------------------------------------
 library(SingleCellExperiment)
 library(BiocFileCache)
-bfc <- BiocFileCache("OSCA/datasets/raw_data", ask = FALSE)
+bfc <- BiocFileCache("OSCA_datasets/raw_data", ask = FALSE)
 calero.counts <- bfcrpath(bfc, file.path("https://www.ebi.ac.uk/biostudies", 
     "files/E-MTAB-5522/counts_Calero_20160113.tsv"))
 
@@ -152,7 +162,7 @@ sce <- scuttle::logNormCounts(sce)
 sce
 
 # Metadata
-bfc <- BiocFileCache("OSCA/datasets", ask = FALSE)
+bfc <- BiocFileCache("OSCA_datasets", ask = FALSE)
 lun.sdrf <- bfcrpath(bfc, file.path("https://www.ebi.ac.uk/arrayexpress/files",
     "E-MTAB-5522/E-MTAB-5522.sdrf.txt"))
 coldata <- read.delim(lun.sdrf, check.names=FALSE)
@@ -284,8 +294,8 @@ table(colLabels(sce))
 
 library(scRNAseq)
 sce <- MacoskoRetinaData()
-saveRDS(sce, "OSCA/datasets/OSCA_Introduction/sce.macosko.retina.rds")
-sce <- readRDS("OSCA/datasets/OSCA_Introduction/sce.macosko.retina.rds")
+saveRDS(sce, "OSCA_datasets/OSCA_Introduction/sce.macosko.retina.rds")
+sce <- readRDS("OSCA_datasets/OSCA_Introduction/sce.macosko.retina.rds")
 
 # Quality control (using mitochondrial genes).
 library(scater)
@@ -393,8 +403,8 @@ markers <- findMarkers(sce, test.type="wilcox", direction="up", lfc=1)
 ```{r, eval=FALSE}
 library(scRNAseq)
 sce.416b <- LunSpikeInData(which="416b")
-saveRDS(sce.416b, "OSCA/datasets/OSCA_Basics/sce.416b.rds")
-sce.416b <- readRDS("OSCA/datasets/OSCA_Basics/sce.416b.rds")
+saveRDS(sce.416b, "OSCA_datasets/OSCA_Basics/sce.416b.rds")
+sce.416b <- readRDS("OSCA_datasets/OSCA_Basics/sce.416b.rds")
 sce.416b$block <- factor(sce.416b$block)
 
 library(SingleCellExperiment)
@@ -526,8 +536,8 @@ marked$discard <- reasons$discard
 ```{r, eval=FALSE}
 library(scRNAseq)
 sce.zeisel <- ZeiselBrainData()
-saveRDS(sce.zeisel, "OSCA/datasets/OSCA_Basics/sce.zeisel.rds")
-sce.zeisel <- readRDS("OSCA/datasets/OSCA_Basics/sce.zeisel.rds")
+saveRDS(sce.zeisel, "OSCA_datasets/OSCA_Basics/sce.zeisel.rds")
+sce.zeisel <- readRDS("OSCA_datasets/OSCA_Basics/sce.zeisel.rds")
 
 library(scater)
 # Sum together expression values (by default, counts) for each feature set in each cell of a SummarizedExperiment object.
@@ -576,8 +586,8 @@ abline(a=0, b=1, col="red")
 ## Normalization by spike-ins---------------------------------------------------------------------
 library(scRNAseq)
 sce.richard <- RichardTCellData()
-saveRDS(sce.richard, "OSCA/datasets/OSCA_Basics/sce.richard.rds")
-sce.richard <- readRDS("OSCA/datasets/OSCA_Basics/sce.richard.rds")
+saveRDS(sce.richard, "OSCA_datasets/OSCA_Basics/sce.richard.rds")
+sce.richard <- readRDS("OSCA_datasets/OSCA_Basics/sce.richard.rds")
 sce.richard <- sce.richard[,sce.richard$`single cell quality`=="OK"]
 sce.richard
 # Computing spike-in size factors for each cell
@@ -649,8 +659,8 @@ library(DropletUtils)
 # also saved in OSCA\datasets\OSCA_Basics
 fname <- file.path(out.path, "raw_gene_bc_matrices/GRCh38")
 sce.pbmc <- read10xCounts(fname, col.names=TRUE)
-saveRDS(sce.pbmc, "OSCA/datasets/OSCA_Basics/sce.pbmc.rds")
-sce.pbmc <- readRDS("OSCA/datasets/OSCA_Basics/sce.pbmc.rds")
+saveRDS(sce.pbmc, "OSCA_datasets/OSCA_Basics/sce.pbmc.rds")
+sce.pbmc <- readRDS("OSCA_datasets/OSCA_Basics/sce.pbmc.rds")
 
 # gene-annotation
 # Substituting ensembl ids with gene names
@@ -713,7 +723,7 @@ dec.pbmc[order(dec.pbmc$bio, decreasing=TRUE),]
 # For example, strong upregulation of cell type-specific genes may result in an enrichment of HVGs at high abundances.
 # This would inflate the fitted trend in that abundance interval and compromise the detection of the relevant genes.
 # In such cases, fitting a mean-dependent trend to the variance of the spike-in transcripts can resolve the problem as spike-ins are not affected by biological variation
-sce.416b <- readRDS("OSCA/datasets/OSCA_Basics/sce.416b.rds")
+sce.416b <- readRDS("OSCA_datasets/OSCA_Basics/sce.416b.rds")
 dec.spike.416b <- modelGeneVarWithSpikes(sce.416b, "ERCC")
 dec.spike.416b[order(dec.spike.416b$bio, decreasing=TRUE),]
 
@@ -838,7 +848,7 @@ sce.pbmc.original <- altExp(sce.pbmc.hvg, "original", withColData=TRUE)
 ```{r, eval=FALSE}
 library(scRNAseq)
 sce.zeisel <- ZeiselBrainData()
-sce.zeisel <- readRDS("OSCA/datasets/OSCA_Basics/sce.zeisel.rds")
+sce.zeisel <- readRDS("OSCA_datasets/OSCA_Basics/sce.zeisel.rds")
 
 library(scater)
 sce.zeisel <- aggregateAcrossFeatures(sce.zeisel, id=sub("_loc[0-9]+$", "", rownames(sce.zeisel)))
@@ -930,23 +940,31 @@ plotReducedDim(sce.zeisel, dimred="UMAP", colour_by="level1class")
     - A graph is built where each node is a cell connected to its nearest neighbors in the high-dimensional space
     - Edges are weighted based on the similarity between the cells involved
     - Algorithm to identify "communities" of cells that are more connected to cells in the same community than they are to cells of different communities
-    - **Advantages**:
+    - **Key Parameters:**
+        - How many neighbors (k) are considered when constructing the graph. This controls the resolution of the clustering where higher k yields a more inter-connected graph and broader clusters.
+        - What scheme is used to weight the edges.
+        - Which community detection algorithm is used to define the clusters.
+    - **Advantages:**
         - Scalability. Uses k-nearest neighbor search that can be done in log-linear time on average, in contrast to hierachical clustering methods with runtimes that are quadratic with respect to the number of cells.
         - Graph construction avoids making strong assumptions about the shape of the clusters or the distribution of cells within each cluster, compared to other methods like k-means (that favor spherical clusters) or Gaussian mixture models (that require normality).
     - **Disadvantages:**
         - After graph construction, no information is retained about relationships beyond the neighboring cells.
-        - The resolution of clustering becomes dependent on the density of cells, which can occasionally be misleading if it overstates the heterogeneity in the data. For example, more steps through the graph are required to move the same distance through a region of higher cell density.
+        - The resolution of clustering becomes dependent on the density of cells. Graph-based clustering forgets real distances and treats dense regions as structurally complex, which can falsely inflate heterogeneity and produce spurious subclusters driven by sampling density rather than biology.
+- **Vector quantization with k-means:**
+    - Vector quantization partitions observations into groups where each group is associated with a representative point, i.e., vector in the coordinate space.
+    - Eliminates differences in cell density across the expression space, ensuring that the most abundant cell type does not dominate downstream results.
+    - k-means clustering divides cells into k clusters. Each cell is assigned to the cluster with the closest centroid, which is done by minimizing the within-cluster sum of squares using a random starting configuration for the k centroids. k is usually set to a large value such as the square root of the number of cells to obtain fine-grained clusters.
 
 ```{r, eval=FALSE}
-# library(DropletTestFiles)
+library(DropletTestFiles)
 # raw.path <- getTestFile("tenx-2.1.0-pbmc4k/1.0.0/raw.tar.gz")
 # out.path <- file.path(tempdir(), "pbmc4k")
 # untar(raw.path, exdir=out.path)
 
-# library(DropletUtils)
+library(DropletUtils)
 # fname <- file.path(out.path, "raw_gene_bc_matrices/GRCh38")
 # sce.pbmc <- read10xCounts(fname, col.names=TRUE)
-sce.pbmc <- readRDS("OSCA/datasets/OSCA_Basics/sce.pbmc.rds")
+sce.pbmc <- readRDS("OSCA_datasets/OSCA_Basics/sce.pbmc.rds")
 
 # gene-annotation
 library(scater)
@@ -989,16 +1007,113 @@ sce.pbmc <- runUMAP(sce.pbmc, dimred="PCA")
 
 ## Graph-based clustering---------------------------------------------------------------------------------
 library(scran)
-nn.clusters <- clusterCells(sce.pbmc, use.dimred="PCA")
+nn.clusters <- clusterCells(sce.pbmc, use.dimred="PCA") 
+# returns a vector containing cluster assignments for each cell in our SingleCellExperiment object
+# By default, clusterCells() uses the 10 nearest neighbors of each cell to construct a shared nearest neighbor graph
+# Edge weight is defined by the highest average rank of the shared neighbors
+# The Walktrap method from the igraph package is used to identify communities
 table(nn.clusters)
 
 library(scater)
 colLabels(sce.pbmc) <- nn.clusters # adding cluster assignments as a factor to each cell
 plotReducedDim(sce.pbmc, "TSNE", colour_by="label")
 
-
+# Similar to the above, this is a more verbose call
 library(bluster)
 nn.clusters2 <- clusterCells(sce.pbmc, use.dimred="PCA", 
     BLUSPARAM=SNNGraphParam(k=10, type="rank", cluster.fun="walktrap"))
 table(nn.clusters2)
+
+nn.clust.info <- clusterCells(sce.pbmc, use.dimred="PCA", full=TRUE) # returns all intermediate structures that are used during clustering, including a graph object from the igraph package
+nn.clust.info$objects$graph
+
+set.seed(11000)
+reducedDim(sce.pbmc, "force") <- igraph::layout_with_fr(nn.clust.info$objects$graph) # visualizing the graph using a force-directed layout
+plotReducedDim(sce.pbmc, colour_by="label", dimred="force")
+
+## Adjusting the parameters---------------------------------------------------------------------------
+
+# Adjusting the number of neighbors (k)
+# More resolved.
+clust.5 <- clusterCells(sce.pbmc, use.dimred="PCA", BLUSPARAM=NNGraphParam(k=5))
+table(clust.5)
+# Less resolved.
+clust.50 <- clusterCells(sce.pbmc, use.dimred="PCA", BLUSPARAM=NNGraphParam(k=50))
+table(clust.50)
+
+# Adjusting the edge weighting scheme
+# number: Weight edges based on the number of nearest neighbors that are shared between two cells
+clust.num <- clusterCells(sce.pbmc, use.dimred="PCA", 
+    BLUSPARAM=NNGraphParam(type="number"))
+table(clust.num)
+# jaccard: Weight edges according to the Jaccard index of the two sets of neighbors
+clust.jaccard <- clusterCells(sce.pbmc, use.dimred="PCA", 
+    BLUSPARAM=NNGraphParam(type="jaccard"))
+table(clust.jaccard)
+# disabling weighting altogether
+clust.none <- clusterCells(sce.pbmc, use.dimred="PCA", 
+    BLUSPARAM=KNNGraphParam())
+table(clust.none)
+
+# Using different community detection algorithms
+clust.walktrap <- clusterCells(sce.pbmc, use.dimred="PCA", 
+    BLUSPARAM=NNGraphParam(cluster.fun="walktrap"))
+
+clust.louvain <- clusterCells(sce.pbmc, use.dimred="PCA", 
+    BLUSPARAM=NNGraphParam(cluster.fun="louvain"))
+
+clust.infomap <- clusterCells(sce.pbmc, use.dimred="PCA", 
+    BLUSPARAM=NNGraphParam(cluster.fun="infomap"))
+
+clust.fast <- clusterCells(sce.pbmc, use.dimred="PCA", 
+    BLUSPARAM=NNGraphParam(cluster.fun="fast_greedy"))
+
+clust.labprop <- clusterCells(sce.pbmc, use.dimred="PCA", 
+    BLUSPARAM=NNGraphParam(cluster.fun="label_prop"))
+
+clust.eigen <- clusterCells(sce.pbmc, use.dimred="PCA", 
+    BLUSPARAM=NNGraphParam(cluster.fun="leading_eigen"))
+
+# Comparing clustering strategies and visualizing them in a heatmap
+library(pheatmap)
+
+# Using a large pseudo-count for a smoother color transition
+# between 0 and 1 cell in each 'tab'.
+tab <- table(paste("Infomap", clust.infomap), 
+    paste("Walktrap", clust.walktrap))
+ivw <- pheatmap(log10(tab+10), main="Infomap vs Walktrap",
+    color=viridis::viridis(100), silent=TRUE)
+
+tab <- table(paste("Fast", clust.fast), 
+    paste("Walktrap", clust.walktrap))
+fvw <- pheatmap(log10(tab+10), main="Fast-greedy vs Walktrap",
+    color=viridis::viridis(100), silent=TRUE)
+
+gridExtra::grid.arrange(ivw[[4]], fvw[[4]])
+# Infomap yields finer clusters than Walktrap while fast-greedy yields coarser clusters
+# scran by default uses rank-based weights followed by Walktrap clustering
+# seurat by default uses Jaccard-based weights followed by Louvain clustering
+
+## Vector quantization with k-means-----------------------------------------------------------------
+set.seed(100)
+clust.kmeans <- clusterCells(sce.pbmc, use.dimred="PCA", 
+    BLUSPARAM=KmeansParam(centers=10))
+table(clust.kmeans)
+colLabels(sce.pbmc) <- clust.kmeans
+plotReducedDim(sce.pbmc, "TSNE", colour_by="label") # t-SNE being a graph based algorithm will agree more with graph-based clustering than k-means
+
+# A reasonable choice of k can be obtained by computing the gap statistic using methods from the cluster package. A more practical use is to deliberately set k to a large value to achieve overclustering. This will forcibly partition cells inside broad clusters that do not have well-defined internal structure.
+set.seed(100)
+clust.kmeans2 <- clusterCells(sce.pbmc, use.dimred="PCA", 
+    BLUSPARAM=KmeansParam(centers=20))
+table(clust.kmeans2)
+colLabels(sce.pbmc) <- clust.kmeans2
+plotTSNE(sce.pbmc, colour_by="label", text_by="label")
+
+# For larger datasets, we can use a variant of this approach named mini-batch k-means from the mbkmeans package. At each iteration, we only update the cluster assignments and centroid positions for a small subset of the observations. This reduces memory usage and computational time and supports parallelization via BiocParallel.
+library(mbkmeans)
+set.seed(100)
+clust.mbkmeans <- clusterCells(sce.pbmc, use.dimred="PCA",
+    BLUSPARAM=bluster::MbkmeansParam(centers=10))
+table(clust.mbkmeans)
 ```

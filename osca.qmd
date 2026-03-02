@@ -954,6 +954,21 @@ plotReducedDim(sce.zeisel, dimred="UMAP", colour_by="level1class")
     - Vector quantization partitions observations into groups where each group is associated with a representative point, i.e., vector in the coordinate space.
     - Eliminates differences in cell density across the expression space, ensuring that the most abundant cell type does not dominate downstream results.
     - k-means clustering divides cells into k clusters. Each cell is assigned to the cluster with the closest centroid, which is done by minimizing the within-cluster sum of squares using a random starting configuration for the k centroids. k is usually set to a large value such as the square root of the number of cells to obtain fine-grained clusters.
+    - **Disadvantages when only using k-means for clustering:**
+        - Favors spherical clusters of equal radius.
+        - The number of clusters k has to be specified beforehand which puts a hard cap on the resolution of the clustering. For example, setting k to be below the number of cell types will always lead to co-clustering of two cell types. *Graph-based clustering* will respect strong separation even if the relevant resolution parameter is set to a low value.
+        - It is dependent on the randomly chosen initial coordinates. This requires multiple runs to verify that the clustering is stable.
+    - **Advantage when using k-means for vector quantization (For large datasets):**
+        - k-means alone gives poor biological clusters, but it works well as a fast preprocessing step to compress data into representative centroids, after which a better clustering method (graph-based) produces the final meaningful clusters.
+        - Faster than direct graph-based clustering
+    - The choice of the number of k-means clusters determines the trade-off between speed and fidelity. Larger values provide a more faithful representation of the underlying distribution of cells, at the cost of requiring more computational work by the second-step clustering procedure. Increasing the number of centroids (clusters) would also require a concomitant increase in the number of neighbors in graph construction (k) to maintain the same level of resolution in the final output.
+- **Hierarchical clustering:**
+    - Arranges samples into a hierarchy based on their relative similarity to each other.
+    - **Dendogram:** Defines clusters with progressively increasing granularity. Quantitatively captures the relationships between subpopulations at various resolutions.
+    - Different methods e.g.,
+        - **Complete Linkage:** Aims to merge clusters with the smallest maximum distance between their elements
+        - **Ward's method:** Aims to minimize the increase in within-cluster variance.
+    - Too slow as it requires a cell-cell distance matrix which is expensive to calculate for a large number of cells.
 
 ```{r, eval=FALSE}
 library(DropletTestFiles)
@@ -1116,4 +1131,48 @@ set.seed(100)
 clust.mbkmeans <- clusterCells(sce.pbmc, use.dimred="PCA",
     BLUSPARAM=bluster::MbkmeansParam(centers=10))
 table(clust.mbkmeans)
+
+# k-means when used for vector quantization overcomes many limitation of directly using k-means
+set.seed(0101010)
+kgraph.clusters <- clusterCells(sce.pbmc, use.dimred="PCA",
+    BLUSPARAM=TwoStepParam(
+        first=KmeansParam(centers=1000),
+        second=NNGraphParam(k=5)
+    )
+)
+table(kgraph.clusters)
+plotTSNE(sce.pbmc, colour_by=I(kgraph.clusters)) # uses the external vector as it is
+
+## Hierarchical clustering----------------------------------------------------------------------------
+sce.416b <- readRDS("OSCA_datasets/OSCA_Basics/sce.416b.rds")
+
+# Performs hierarchical clustering on the top PCs i.e., computes a cell-cell distance matrix using the top PCs
+# then applies Ward’s minimum variance method to obtain a dendrogram
+# Here, Ward's methods is more appropriate as it is less affected by differences in variance between clusters
+hclust.416b <- clusterCells(sce.416b, use.dimred="PCA",
+    BLUSPARAM=HclustParam(method="ward.D2"), full=TRUE)
+tree.416b <- hclust.416b$objects$hclust
+
+# Making a prettier dendrogram.
+library(dendextend)
+tree.416b$labels <- seq_along(tree.416b$labels)
+dend <- as.dendrogram(tree.416b, hang=0.1)
+
+combined.fac <- paste0(sce.416b$block, ".", 
+    sub(" .*", "", sce.416b$phenotype))
+labels_colors(dend) <- c(
+    "20160113.wild"="blue",
+    "20160113.induced"="red",
+    "20160325.wild"="dodgerblue",
+    "20160325.induced"="salmon"
+)[combined.fac][order.dendrogram(dend)]
+
+plot(dend)
+```
+
+# OSCA Workflows
+
+## Lun 416B cell line (Smart-seq2)
+```{r}
+
 ```

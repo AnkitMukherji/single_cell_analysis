@@ -1144,7 +1144,7 @@ table(kgraph.clusters)
 plotTSNE(sce.pbmc, colour_by=I(kgraph.clusters)) # uses the external vector as it is
 
 ## Hierarchical clustering----------------------------------------------------------------------------
-sce.416b <- readRDS("OSCA_datasets/OSCA_Basics/sce.416b.rds")
+sce.416b <- readRDS("OSCA_datasets/OSCA_Basics/sce.416b_processed.rds")
 
 # Performs hierarchical clustering on the top PCs i.e., computes a cell-cell distance matrix using the top PCs
 # then applies Ward’s minimum variance method to obtain a dendrogram
@@ -1173,6 +1173,174 @@ plot(dend)
 # OSCA Workflows
 
 ## Lun 416B cell line (Smart-seq2)
-```{r}
+- 416b: immortalized mouse myeloid progenitor cell line
+- Contains two 96-well plates of 416b cells processed using the Smart-seq2 protocol
+- A constant amount of spike-in RNA from the External RNA Controls Consortium (ERCC) was also added to each cell's lysate prior to library preparation.
+- Expression of each gene was quantified by counting the total number of reads mapped to the exonic regions of the genome.
+- Quantity of each spike-in transcript was measured by counting the number of reads mapped to the spike-in reference sequences.
 
+```{r}
+## Data loading---------------------------------------------------------------
+library(scRNAseq)
+sce.416b <- readRDS("OSCA_datasets/OSCA_Basics/sce.416b.rds")
+# Turning each block (2) as factors
+sce.416b$block <- factor(sce.416b$block)
+
+# Renaming the rows of our SingleCellExperiment with gene symbols
+# Keeping ensembl identifiers for missing or duplicate gene symbols
+library(AnnotationHub)
+# ens.mm.v97 <- AnnotationHub()[["AH73905"]]
+# file.copy(
+#   DBI::dbGetInfo(dbconn(ens.mm.v97))$dbname,
+#   "OSCA_datasets/OSCA_Workflows/ens.mm.v97.sqlite"
+# )
+ens.mm.v97 <- EnsDb("OSCA_datasets/OSCA_Workflows/ens.mm.v97.sqlite")
+rowData(sce.416b)$ENSEMBL <- rownames(sce.416b)
+# Gene symbols
+rowData(sce.416b)$SYMBOL <- mapIds(ens.mm.v97, keys=rownames(sce.416b),
+    keytype="GENEID", column="SYMBOL")
+# Chromosome
+rowData(sce.416b)$SEQNAME <- mapIds(ens.mm.v97, keys=rownames(sce.416b),
+    keytype="GENEID", column="SEQNAME")
+
+library(scater)
+rownames(sce.416b) <- uniquifyFeatureNames(rowData(sce.416b)$ENSEMBL, 
+    rowData(sce.416b)$SYMBOL)
+
+## Quality Control-----------------------------------------------------------
+# Saving an unfiltered copy of the SingleCellExperiment
+unfiltered <- sce.416b
+
+# calculating mitochondrial proportions (although not required as spike-ins are present for the same purpose)
+mito <- which(rowData(sce.416b)$SEQNAME=="MT")
+stats <- perCellQCMetrics(sce.416b, subsets=list(Mt=mito))
+qc <- quickPerCellQC(stats, percent_subsets=c("subsets_Mt_percent",
+    "altexps_ERCC_percent"), batch=sce.416b$block)
+sce.416b <- sce.416b[,!qc$discard]
+
+colData(unfiltered) <- cbind(colData(unfiltered), stats)
+unfiltered$block <- factor(unfiltered$block)
+unfiltered$discard <- qc$discard
+
+# Distribution of each QC metric across cells in the 416B dataset, stratified by the plate of origin. Each point represents a cell and is colored according to whether that cell was discarded.
+gridExtra::grid.arrange(
+    plotColData(unfiltered, x="block", y="sum", 
+        colour_by="discard") + scale_y_log10() + ggtitle("Total count"),
+    plotColData(unfiltered, x="block", y="detected", 
+        colour_by="discard") + scale_y_log10() + ggtitle("Detected features"),
+    plotColData(unfiltered, x="block", y="subsets_Mt_percent", 
+        colour_by="discard") + ggtitle("Mito percent"),
+    plotColData(unfiltered, x="block", y="altexps_ERCC_percent", 
+        colour_by="discard") + ggtitle("ERCC percent"),
+    nrow=2,
+    ncol=2
+)
+
+# Percentage of mitochondrial reads in each cell in the 416B dataset, compared to the total count (left) or the percentage of spike-in reads (right). Each point represents a cell and is colored according to whether that cell was discarded.
+gridExtra::grid.arrange(
+    plotColData(unfiltered, x="sum", y="subsets_Mt_percent", 
+        colour_by="discard") + scale_x_log10(),
+    plotColData(unfiltered, x="altexps_ERCC_percent", y="subsets_Mt_percent",
+        colour_by="discard"),
+    ncol=2
+)
+
+# Number of cells removed and their reasons
+colSums(as.matrix(qc))
+
+## Normalization---------------------------------------------------------
+# No pre-clustering is performed here, as the dataset is small and all cells are derived from the same cell line anyway.
+library(scran)
+sce.416b <- computeSumFactors(sce.416b)
+sce.416b <- logNormCounts(sce.416b)
+summary(sizeFactors(sce.416b))
+
+# Relationship between the library size factors and the deconvolution size factors in the 416B dataset. Each cell is colored according to its oncogene induction status.
+# The induced cells have size factors that are systematically shifted from the uninduced cells, consistent with the presence of a composition bias
+plot(librarySizeFactors(sce.416b), sizeFactors(sce.416b), pch=16,
+    xlab="Library size factors", ylab="Deconvolution factors", 
+    col=c("black", "red")[grepl("induced", sce.416b$phenotype)+1],
+    log="xy")
+
+## Variance Modelling-----------------------------------------------------
+# Blocks used to minimize plate effects
+dec.416b <- modelGeneVarWithSpikes(sce.416b, "ERCC", block=sce.416b$block)
+# Using the top 10% genes with the largest biological components
+chosen.hvgs <- getTopHVGs(dec.416b, prop=0.1)
+
+# Per-gene variance as a function of the mean for the log-expression values in the 416B dataset. Each point represents a gene (black) with the mean-variance trend (blue) fitted to the spike-in transcripts (red). This was performed separately for each plate.
+par(mfrow=c(1,2))
+blocked.stats <- dec.416b$per.block
+for (i in colnames(blocked.stats)) {
+    current <- blocked.stats[[i]]
+    plot(current$mean, current$total, main=i, pch=16, cex=0.5,
+        xlab="Mean of log-expression", ylab="Variance of log-expression")
+    curfit <- metadata(current)
+    points(curfit$mean, curfit$var, col="red", pch=16)
+    curve(curfit$trend(x), col='dodgerblue', add=TRUE, lwd=2)
+}
+
+## Batch correction-----------------------------------------------------
+# The composition of cells is expected to be the same across the two plates, hence the use of removeBatchEffect() rather than more complex methods. For larger datasets, use regressBatches() from the batchelor package.
+library(limma)
+assay(sce.416b, "corrected") <- removeBatchEffect(logcounts(sce.416b), 
+    design=model.matrix(~sce.416b$phenotype), batch=sce.416b$block)
+
+## Dimensionality reduction---------------------------------------------
+# We do not expect a great deal of heterogeneity in this dataset, so we only request 10 PCs.
+sce.416b <- runPCA(sce.416b, ncomponents=10, subset_row=chosen.hvgs,
+    exprs_values="corrected", BSPARAM=BiocSingular::ExactParam())
+
+# We use an exact SVD to avoid warnings from irlba about handling small datasets.
+set.seed(1010)
+sce.416b <- runTSNE(sce.416b, dimred="PCA", perplexity=10)
+
+## Clustering-----------------------------------------------------------
+my.dist <- dist(reducedDim(sce.416b, "PCA"))
+my.tree <- hclust(my.dist, method="ward.D2")
+
+library(dynamicTreeCut)
+my.clusters <- unname(cutreeDynamic(my.tree, distM=as.matrix(my.dist),
+    minClusterSize=10, verbose=0))
+colLabels(sce.416b) <- factor(my.clusters)
+
+# Each cluster is comprised of cells from both batches, indicating that the clustering is not driven by a batch effect.
+table(Cluster=colLabels(sce.416b), Plate=sce.416b$block)
+
+# We observe differences in in the composition of each cluster, consistent with a biological effect of oncogene induction.
+table(Cluster=colLabels(sce.416b), Oncogene=sce.416b$phenotype)
+
+# Each point represents a cell and is colored according to the assigned cluster.
+plotTSNE(sce.416b, colour_by="label")
+
+library(cluster)
+clust.col <- scater:::.get_palette("tableau10medium") # hidden scater colours
+
+# The silhouette score is a metric used to calculate the goodness of a clustering technique, ranging from -1 to +1, where a higher value indicates that objects are well-matched to their own cluster and poorly matched to neighboring clusters. It measures how similar a point is to its own cluster (cohesion) compared to other clusters (separation).
+sil <- silhouette(my.clusters, dist = my.dist)
+
+sil.cols <- clust.col[ifelse(sil[,3] > 0, sil[,1], sil[,2])]
+sil.cols <- sil.cols[order(-sil[,1], sil[,3])]
+
+# Most cells have relatively small positive widths indicating that the separation between clusters is weak. This may be symptomatic of over-clustering where clusters that are clearly defined on oncogene induction status are further split into subsets that are less well separated.
+# Each bar represents the silhouette width for a cell and is colored according to the assigned cluster (if positive) or the closest cluster (if negative).
+plot(sil, main = paste(length(unique(my.clusters)), "clusters"),
+    border=sil.cols, col=sil.cols, do.col.sort=FALSE)
+
+## Interpretation------------------------------------------------------------
+markers <- findMarkers(sce.416b, my.clusters, block=sce.416b$block)
+marker.set <- markers[["1"]]
+head(marker.set, 10)
+
+top.markers <- rownames(marker.set)[marker.set$Top <= 10]
+
+# Expression profiles of the top candidates to verify that the DE signature is robust
+# Most of the top markers have strong and consistent up- or downregulation in cells of cluster 1 compared to some or all of the other clusters.
+# Cluster 1 contains oncogene-induced cells with strong downregulation of DNA replication and cell cycle genes. This is consistent with the potential induction of senescence as an anti-tumorigenic response.
+plotHeatmap(sce.416b, features=top.markers, order_columns_by="label",
+    colour_columns_by=c("label", "block", "phenotype"),
+    center=TRUE, symmetric=TRUE, zlim=c(-5, 5))
+
+## Saving the processed dataset-----------------------------------------------
+saveRDS(sce.416b, "OSCA_datasets/OSCA_Basics/sce.416b_processed.rds")
 ```

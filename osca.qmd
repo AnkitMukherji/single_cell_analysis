@@ -1149,6 +1149,8 @@ sce.416b <- readRDS("OSCA_datasets/OSCA_Basics/sce.416b_processed.rds")
 # Performs hierarchical clustering on the top PCs i.e., computes a cell-cell distance matrix using the top PCs
 # then applies Ward’s minimum variance method to obtain a dendrogram
 # Here, Ward's methods is more appropriate as it is less affected by differences in variance between clusters
+library(scran)
+library(bluster)
 hclust.416b <- clusterCells(sce.416b, use.dimred="PCA",
     BLUSPARAM=HclustParam(method="ward.D2"), full=TRUE)
 tree.416b <- hclust.416b$objects$hclust
@@ -1158,14 +1160,67 @@ library(dendextend)
 tree.416b$labels <- seq_along(tree.416b$labels)
 dend <- as.dendrogram(tree.416b, hang=0.1)
 
-combined.fac <- paste0(sce.416b$block, ".", 
-    sub(" .*", "", sce.416b$phenotype))
+combined.fac <- paste0(sce.416b$block, ".", sub(" .*", "", sce.416b$phenotype))
 labels_colors(dend) <- c(
     "20160113.wild"="blue",
     "20160113.induced"="red",
     "20160325.wild"="dodgerblue",
     "20160325.induced"="salmon"
 )[combined.fac][order.dendrogram(dend)]
+
+# Each leaf node is a cell that is coloured according to its oncogene induction status (red is induced, blue is control) and plate of origin (light or dark).
+# There is a clear split in the population caused by oncogene induction.
+plot(dend)
+
+# dynamicTreeCut is used to remove internal branches such that every subtree represents a distinct cluster
+# deepSplit is used to control the resolution of the resulting clusters
+hclust.dyn <- clusterCells(sce.416b, use.dimred="PCA",
+    BLUSPARAM=HclustParam(method="ward.D2", cut.dynamic=TRUE,
+        cut.params=list(minClusterSize=10, deepSplit=1)))
+table(hclust.dyn)
+labels_colors(dend) <- as.integer(hclust.dyn)[order.dendrogram(dend)]
+# Each leaf node is a cell that is coloured according to its assigned cluster identity from a dynamic tree cut.
+plot(dend)
+
+colLabels(sce.416b) <- factor(hclust.dyn)
+plotReducedDim(sce.416b, "TSNE", colour_by="label")
+
+library(scater)
+colLabels(sce.416b) <- factor(hclust.dyn)
+# Cluster 2 is split across two visual clusters in the plot but this might be due to a distortion introduced by t-SNE, given that this cluster actually has the highest average silhouette width
+plotReducedDim(sce.416b, "TSNE", colour_by="label")
+
+## In two-step procedures------------------------------------------------------
+# We can use a two-step approach to perform hierarchical clustering on the representative centroids.
+# This avoids the construction of a distance matrix across all cells for faster computation.
+# Setting the seed due to the randomness of k-means.
+sce.pbmc <- readRDS("OSCA_datasets/OSCA_Basics/sce.pbmc_processed.rds")
+
+set.seed(1111)
+khclust.info <- clusterCells(sce.pbmc, use.dimred="PCA",
+    BLUSPARAM=TwoStepParam(
+        first=KmeansParam(centers=1000),
+        second=HclustParam(method="ward.D2", cut.dynamic=TRUE,
+            cut.param=list(deepSplit=3)) # for higher resolution.
+    ),
+    full=TRUE
+)
+table(khclust.info$clusters)
+
+# t-SNE plot of the PBMC dataset, where each point represents a cell and is coloured according to the identity of the assigned cluster from combined k-means/hierarchical clustering.
+plotTSNE(sce.pbmc, colour_by=I(khclust.info$clusters), 
+    text_by=I(khclust.info$clusters))
+
+k.stats <- khclust.info$objects$first # k-means statistics
+tree.pbmc <- khclust.info$objects$second$hclust # hclust statistics
+
+m <- match(as.integer(tree.pbmc$labels), k.stats$cluster)
+final.clusters <- khclust.info$clusters[m]
+
+# TODO: expose scater color palette for easier re-use,
+# given that the default colors start getting recycled.
+dend <- as.dendrogram(tree.pbmc, hang=0.1)
+labels_colors(dend) <- as.integer(final.clusters)[order.dendrogram(dend)]
 
 plot(dend)
 ```
@@ -1343,4 +1398,127 @@ plotHeatmap(sce.416b, features=top.markers, order_columns_by="label",
 
 ## Saving the processed dataset-----------------------------------------------
 saveRDS(sce.416b, "OSCA_datasets/OSCA_Basics/sce.416b_processed.rds")
+```
+
+## Zeisel mouse brain (STRT-Seq)
+- Heterogeneous dataset from a study of cell types in the mouse brain.
+- Contains approximately 3000 cells of varying types such as oligodendrocytes, microglia and neurons.
+- Individual cells were isolated using the microfluidics system and library preparation was performed on each cell using a UMI-based protocol. After sequencing, expression was quantified by counting the number of unique molecular identifiers (UMIs) mapped to each gene.
+
+```{r}
+To be continued.............
+```
+
+## Unfiltered human PBMC (10X Genomics)
+
+```{r}
+## Data loading---------------------------------------------------------------
+# library(DropletTestFiles)
+# raw.path <- getTestFile("tenx-2.1.0-pbmc4k/1.0.0/raw.tar.gz")
+# out.path <- file.path(tempdir(), "pbmc4k")
+# untar(raw.path, exdir=out.path)
+
+# library(DropletUtils)
+# fname <- file.path(out.path, "raw_gene_bc_matrices/GRCh38")
+# sce.pbmc <- read10xCounts(fname, col.names=TRUE)
+
+sce.pbmc <- readRDS("OSCA_datasets/OSCA_Basics/sce.pbmc.rds")
+
+library(scater)
+rownames(sce.pbmc) <- uniquifyFeatureNames(
+    rowData(sce.pbmc)$ID, rowData(sce.pbmc)$Symbol)
+
+library(EnsDb.Hsapiens.v86)
+location <- mapIds(EnsDb.Hsapiens.v86, keys=rowData(sce.pbmc)$ID, 
+    column="SEQNAME", keytype="GENEID")
+
+## Quality control-----------------------------------------------------------
+# Cell detection using the emptyDrops() algorithm
+set.seed(100)
+e.out <- emptyDrops(counts(sce.pbmc))
+sce.pbmc <- sce.pbmc[,which(e.out$FDR <= 0.001)]
+
+unfiltered <- sce.pbmc
+
+# Removing cells with large mitochondrial proportions, using it as a proxy for cell damage. 
+# This reduces the risk of removing cell types with low RNA content, especially in a heterogeneous PBMC population with many different cell types.
+stats <- perCellQCMetrics(sce.pbmc, subsets=list(Mito=which(location=="MT")))
+high.mito <- isOutlier(stats$subsets_Mito_percent, type="higher")
+sce.pbmc <- sce.pbmc[,!high.mito]
+summary(high.mito)
+
+colData(unfiltered) <- cbind(colData(unfiltered), stats)
+unfiltered$discard <- high.mito
+
+# Each point is a cell and is colored according to whether it was discarded by the mitochondrial filter.
+gridExtra::grid.arrange(
+    plotColData(unfiltered, y="sum", colour_by="discard") +
+        scale_y_log10() + ggtitle("Total count"),
+    plotColData(unfiltered, y="detected", colour_by="discard") +
+        scale_y_log10() + ggtitle("Detected features"),
+    plotColData(unfiltered, y="subsets_Mito_percent",
+        colour_by="discard") + ggtitle("Mito percent"),
+    ncol=2
+)
+
+# Proportion of mitochondrial reads in each cell of the PBMC dataset compared to its total count.
+plotColData(unfiltered, x="sum", y="subsets_Mito_percent",
+    colour_by="discard") + scale_x_log10()
+
+## Normalization-------------------------------------------------------------
+library(scran)
+set.seed(1000)
+clusters <- quickCluster(sce.pbmc)
+sce.pbmc <- computeSumFactors(sce.pbmc, cluster=clusters)
+sce.pbmc <- logNormCounts(sce.pbmc)
+
+summary(sizeFactors(sce.pbmc))
+
+plot(librarySizeFactors(sce.pbmc), sizeFactors(sce.pbmc), pch=16,
+    xlab="Library size factors", ylab="Deconvolution factors", log="xy")
+
+## Variance modelling---------------------------------------------------------
+set.seed(1001)
+dec.pbmc <- modelGeneVarByPoisson(sce.pbmc)
+top.pbmc <- getTopHVGs(dec.pbmc, prop=0.1)
+
+plot(dec.pbmc$mean, dec.pbmc$total, pch=16, cex=0.5,
+    xlab="Mean of log-expression", ylab="Variance of log-expression")
+curfit <- metadata(dec.pbmc)
+curve(curfit$trend(x), col='dodgerblue', add=TRUE, lwd=2)
+
+## Dimensionality reduction---------------------------------------------------
+set.seed(10000)
+sce.pbmc <- denoisePCA(sce.pbmc, subset.row=top.pbmc, technical=dec.pbmc)
+
+set.seed(100000)
+sce.pbmc <- runTSNE(sce.pbmc, dimred="PCA")
+
+set.seed(1000000)
+sce.pbmc <- runUMAP(sce.pbmc, dimred="PCA")
+
+# Number of reasonable PCs retained
+ncol(reducedDim(sce.pbmc, "PCA"))
+
+## Clustering-----------------------------------------------------------------
+g <- buildSNNGraph(sce.pbmc, k=10, use.dimred = 'PCA')
+clust <- igraph::cluster_walktrap(g)$membership
+colLabels(sce.pbmc) <- factor(clust)
+
+table(colLabels(sce.pbmc))
+plotTSNE(sce.pbmc, colour_by="label")
+
+## Interpretation-------------------------------------------------------------
+markers <- findMarkers(sce.pbmc, pval.type="some", direction="up")
+
+# High expression of CD14, CD68 and MNDA combined with low expression of FCGR3A (CD16) suggests that this cluster contains monocytes, compared to macrophages in cluster 16
+marker.set <- markers[["7"]]
+as.data.frame(marker.set[1:30,1:3])
+
+# Distribution of expression values for monocyte and macrophage markers across clusters in the PBMC dataset.
+plotExpression(sce.pbmc, features=c("CD14", "CD68",
+    "MNDA", "FCGR3A"), x="label", colour_by="label")
+
+# Saving the processed dataset-----------------------------------------------
+saveRDS(sce.pbmc, "OSCA_datasets/OSCA_Basics/sce.pbmc_processed.rds")
 ```

@@ -1290,6 +1290,178 @@ names(subcluster.out)
 table(subcluster.out[[1]]$subcluster)
 ```
 
+## Marker gene detection
+- We have a priori knowledge of the marker genes associated with particular cell types, allowing us to treat clustering as a proxy for cell type identity.
+- The most straightforward approach to marker gene detection involves testing for differential expression between clusters. If a gene is strongly DE between clusters, it is likely to have driven the separation of cells in the clustering algorithm.
+- **Scoring markers by pairwise comparisons:**
+    - It compares each pair of clusters and compute scores quantifying the differences in the expression distributions between clusters.
+    - Marker detection works better when clusters are compared pairwise rather than against all other cells, because this avoids biases from uneven cell-type abundances. 
+    - Effect sizes (like log-fold change) are more informative than p-values in single-cell data, so modern methods like scoreMarkers() focus on effect sizes instead of statistical significance.
+    - The AUC or Cohen’s d is usually the best choice for general purpose marker detection, as they are effective regardless of the magnitude of the expression values. The log-fold change in the detected proportion is specifically useful for identifying binary changes in expression.
+
+```{r, eval=FALSE}
+sce.pbmc <- readRDS("OSCA_datasets/OSCA_Basics/sce.pbmc_processed.rds")
+
+## Scoring markers by pairwise comparisons--------------------------------------------------
+library(scran)
+marker.info <- scoreMarkers(sce.pbmc, colLabels(sce.pbmc))
+marker.info
+# The different effect size summaries include:
+# self.average: mean log-expression of the gene in a particular cluster
+# other.averag: grand mean across all other clusters
+# self.detected: the proportion of cells with detected expression in the cluster
+# other.detected: the mean detected proportion of cells across all other clusters
+colnames(marker.info[["5"]]) # statistics for cluster 5.
+
+# For each cluster, we can then rank candidate markers based on one of these effect size summaries.
+# Cluster 5 contains NK cells
+chosen <- marker.info[["5"]]
+ordered <- chosen[order(chosen$mean.AUC, decreasing=TRUE),]
+head(ordered[,1:4]) # showing basic stats only, for brevity.
+
+library(scater)
+# Distribution of expression values across clusters for the top potential marker genes (as determined by the mean AUC) for cluster 5 in the PBMC dataset.
+plotExpression(sce.pbmc, features=head(rownames(ordered)), 
+    x="label", colour_by="label")
+
+## Effect sizes for pairwise comparisons--------------------------------------------------
+# In the context of marker detection, the area under the curve (AUC) quantifies our ability to distinguish between two distributions in a pairwise comparison. 
+# The AUC represents the probability that a randomly chosen observation from our cluster of interest is greater than a randomly chosen observation from the other cluster. 
+# A value of 1 corresponds to upregulation, where all values of our cluster of interest are greater than any value from the other cluster.
+# A value of 0.5 means that there is no net difference in the location of the distributions.
+# A value of 0 corresponds to downregulation. 
+# The AUC is closely related to the U statistic in the Wilcoxon ranked sum test (a.k.a., Mann-Whitney U-test).
+auc.only <- chosen[,grepl("AUC", colnames(chosen))]
+auc.only[order(auc.only$mean.AUC,decreasing=TRUE),]
+
+# Cohen’s d is a standardized log-fold change where the difference in the mean log-expression between groups is scaled by the average standard deviation across groups.
+# Positive values indicate that the gene is upregulated in our cluster of interest, negative values indicate downregulation and values close to zero indicate that there is little difference. # Cohen’s d is roughly analogous to the t-statistic in various two-sample t-tests.
+cohen.only <- chosen[,grepl("logFC.cohen", colnames(chosen))]
+cohen.only[order(cohen.only$mean.logFC.cohen,decreasing=TRUE),]
+
+# Log-fold change in the proportion of cells with detected expression between clusters is also calculated.
+# This ignores any information about the magnitude of expression, only considering whether any expression is detected at all.
+# Positive values indicate that a greater proportion of cells express the gene in our cluster of interest compared to the other cluster.
+# A pseudo-count is added to avoid undefined log-fold changes when no cells express the gene in either group.
+detect.only <- chosen[,grepl("logFC.detected", colnames(chosen))]
+detect.only[order(detect.only$mean.logFC.detected,decreasing=TRUE),]
+
+## Summarizing pairwise effects-----------------------------------------------------------
+# For N clusters, each cluster is associated with N - 1 values for each type of effect size.
+# Mean: 
+# For cluster X, a large mean effect size (>0 for LFC, >0.5 for AUCs) indicates that the gene is upregulated in X compared to the average of the other groups.
+# Median: 
+# A large value indicates that the gene is upregulated in X compared to most (>50 %) other clusters.
+# The median provides greater robustness to outliers than the mean. It avoids an inflated effect size if only a minority of comparisons have large effects, but it also overstates the effect size by ignoring a minority of comparisons that have opposing effects.
+# The minimum value (min.*) is the most stringent summary for identifying upregulated genes, as a large value indicates that the gene is upregulated in X compared to all other clusters. Conversely, if the minimum is small (<0 for the log-fold changes, <0.5 for the AUCs), we can conclude that the gene is downregulated in X compared to at least one other cluster.
+# The maximum value (max.*) is the least stringent summary for identifying upregulated genes, as a large value can be obtained if there is strong upregulation in X compared to any other cluster. Conversely, if the maximum is small, we can conclude that the gene is downregulated in X compared to all other clusters.
+# The minimum rank, a.k.a., “min-rank” (rank.*) is the smallest rank of each gene across all pairwise comparisons. Specifically, genes are ranked within each pairwise comparison based on decreasing effect size, and then the smallest rank across all comparisons is reported for each gene. If a gene has a small min-rank, we can conclude that it is one of the top upregulated genes in at least one comparison of X to another cluster.
+
+# Using the median Cohen’s d to obtain a ranking of upregulated markers for cluster 12, which probably contains monocytes.
+chosen <- marker.info[["12"]]
+ordered <- chosen[order(chosen$median.logFC.cohen,decreasing=TRUE),]
+head(ordered[,1:4])
+
+# Distribution of expression values across clusters for the top potential marker genes (as determined by the median Cohen’s d) for cluster 12 in the PBMC dataset.
+plotExpression(sce.pbmc, features=head(rownames(ordered)), 
+    x="label", colour_by="label")
+
+# Ranking by the minimum can be highly effective as it yields a concise set of highly cluster-specific markers. 
+# However, any gene that is expressed at the same level in two or more clusters will simply not be detected. This is likely to discard many interesting genes, especially if the clusters are finely resolved with weak separation. 
+# For example, consider a mixed population of CD4+ only, CD8+ only, double-positive and double-negative T cells. Neither C4 or Cd8 would be detected as subpopulation-specific markers because each gene is expressed in two subpopulations such that the minimum effect would be small.
+
+# Ranking genes by the min-rank is similiar in stringency to ranking by the maximum effect size, in that both will respond to strong DE in a single comparison. 
+# However, the min-rank is more useful as it ensures that a single comparison to another cluster with consistently large effects does not dominate the ranking. 
+# If we select all genes with min-ranks less than or equal to T, the resulting set is the union of the top T genes from all pairwise comparisons. This guarantees that our set contains at least T genes that can distinguish our cluster of interest from any other cluster, which permits a comprehensive determination of a cluster’s identity.
+
+ordered <- chosen[order(chosen$rank.logFC.cohen),]
+top.ranked <- ordered[ordered$rank.logFC.cohen <= 5,]
+rownames(top.ranked)
+
+# Heatmap of the centered average log-expression values for the top potential marker genes for cluster 12 in the PBMC dataset. The set of markers was selected as those genes with Cohen’s d-derived min-ranks less than or equal to 5.
+plotGroupedHeatmap(sce.pbmc, features=rownames(top.ranked), group="label", 
+    center=TRUE, zlim=c(-3, 3))
+
+# Our discussion above has focused mainly on potential markers that are upregulated in our cluster of interest. 
+# However, it also means that any cluster defined by downregulation of a marker will not contain that gene among the top features. This is occasionally relevant for subtypes or other states that are defined by low expression of particular genes. 
+# In such cases, focusing on upregulation may yield a disappointing set of markers, and it may be worth examining some of the lowest-ranked genes to see if there is any consistent downregulation compared to other clusters.
+
+# Omitting the decreasing=TRUE to focus on negative effects.
+ordered <- chosen[order(chosen$median.logFC.cohen),1:4]
+head(ordered)
+
+## Obtaining the full effects-------------------------------------------------------------
+# To obtain the effect sizes for all pairwise comparisons involving a particular cluster, we set full.stats=TRUE
+marker.info <- scoreMarkers(sce.pbmc, colLabels(sce.pbmc), full.stats=TRUE)
+chosen <- marker.info[["12"]]
+# full.AUC contains the AUCs for the comparisons between cluster 12 and every other cluster.
+chosen$full.AUC
+
+# To identify the genes that distinguish cluster 12 from other clusters with high LYZ expression
+lyz.high <- c("7", "8", "10", "12", "15", "18") # based on inspection of the previous Figure.
+subset <- chosen$full.AUC[,colnames(chosen$full.AUC) %in% lyz.high]
+to.show <- subset[computeMinRank(subset) <= 10,]
+to.show
+
+# Heatmap of the centered average log-expression values for the top potential marker genes for cluster 12 relative to other LYZ-high clusters in the PBMC dataset. The set of markers was selected as those genes with AUC-derived min-ranks less than or equal to 10.
+plotGroupedHeatmap(sce.pbmc[,colLabels(sce.pbmc) %in% lyz.high],
+    features=rownames(to.show), group="label", center=TRUE, zlim=c(-3, 3))
+
+# To identify markers that are upregulated against 80 % of other clusters
+# Computing and sorting on the 20th percentile of effect sizes
+stat <- rowQuantiles(as.matrix(chosen$full.AUC), p=0.2)
+chosen[order(stat, decreasing=TRUE), 1:4]
+
+## Using a log-fold change threshold---------------------------------------------------------
+# The Cohen’s d and AUC calculations consider both the magnitude of the difference between clusters as well as the variability within each cluster.
+# If the variability is lower, it is possible for a gene to have a large effect size even if the magnitude of the difference is small. These genes tend to be somewhat uninformative for cell type identification despite their strong differential expression (e.g., ribosomal protein genes).
+# Cohen's d = difference in means (magnitude) / within-group variability (SD)
+# Small difference, Low variability; d = 0.1/0.05 = 2 (Large effect size)
+# Large difference, High variability; d = 2/3 = 0.67 (Small effect size)
+# We would prefer genes with larger log-fold changes between clusters, even if they have higher variability.
+
+# To favor the detection of such genes, we can compute the effect sizes relative to a log-fold change threshold by setting lfc= in scoreMarkers().
+# The definition of Cohen’s d is generalized to the standardized difference between the observed log-fold change and the specified lfc threshold.
+# The AUC is redefined as the probability of randomly picking an expression value from one cluster that is greater than a random value from the other cluster plus lfc.
+marker.info.lfc <- scoreMarkers(sce.pbmc, colLabels(sce.pbmc), lfc=2)
+chosen2 <- marker.info.lfc[["4"]]
+chosen2 <- chosen2[order(chosen2$mean.AUC, decreasing=TRUE),]
+chosen2[,c("self.average", "other.average", "mean.AUC")]
+
+# Dot plot of the top potential marker genes (as determined by the mean AUC) for cluster 4 in the PBMC dataset. Each row corrresponds to a marker gene and each column corresponds to a cluster. The size of each dot represents the proportion of cells with detected expression of the gene in the cluster, while the color is proportional to the average expression across all cells in that cluster.
+plotDots(sce.pbmc, rownames(chosen2)[1:10], group="label")
+
+# If lfc is positive, a positive Cohen’s d and an AUC above 0.5 represents upregulation. 
+# However, a negative Cohen’s d or AUC below 0.5 may not represent downregulation; it may just indicate that the observed log-fold change is less than the specified lfc. 
+# The converse applies when lfc is negative, where the only conclusive interpretation occurs for downregulated genes.
+
+## Handling blocking factors---------------------------------------------------------------
+# Factors of variation like batch effects, sex differences if not modelled, can interfere with marker gene detection.
+# By inflating the variance within each cluster, but also by distorting the log-fold changes if the cluster composition varies across levels of the blocking factor.
+sce.416b <- readRDS("OSCA_datasets/OSCA_Basics/sce.416b_processed.rds")
+m.out <- scoreMarkers(sce.416b, colLabels(sce.416b), block=sce.416b$block)
+
+# For each gene, each pairwise comparison between clusters is performed separately in each level of the blocking factor - in this case, the plate of origin. 
+# By comparing within each batch, we cancel out any batch effects so that they are not conflated with the biological differences between subpopulations. 
+# The effect sizes are then averaged across batches to obtain a single value per comparison, using a weighted mean that accounts for the number of cells involved in the comparison in each batch. 
+# A similar correction is applied to the mean log-expression and proportion of detected cells inside and outside each cluster.
+demo <- m.out[["1"]]
+ordered <- demo[order(demo$median.logFC.cohen, decreasing=TRUE),]
+ordered[,1:4]
+
+# Distribution of expression values across clusters for the top potential marker genes from cluster 1 in the 416B dataset. Each point represents a cell and is colored by the batch of origin.
+plotExpression(sce.416b, features=rownames(ordered)[1:6],
+    x="label", colour_by="block")
+
+# The block= argument assumes that each pair of clusters is present in at least one batch. In scenarios where cells from two clusters never co-occur in the same batch, the associated pairwise comparison will be impossible and is ignored during calculation of summary statistics.
+```
+
+## Cell type annotation
+
+```{r, eval=FALSE}
+
+```
+
 # OSCA Workflows
 
 ## Lun 416B cell line (Smart-seq2)

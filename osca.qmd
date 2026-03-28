@@ -7,7 +7,7 @@ format: html
 # Datasets stored in OneDrive
 ```{r, eval=FALSE}
 # Change path as necessary
-output_path = "C:/Users/ankit/OneDrive/single_cell_analysis"
+output_path = "C:/Users/hp/OneDrive/single_cell_analysis"
 setwd(output_path)
 ```
 
@@ -1457,8 +1457,47 @@ plotExpression(sce.416b, features=rownames(ordered)[1:6],
 ```
 
 ## Cell type annotation
+- **Strategies of cell-annotation:**
+    - Using curated gene sets associated with particular biological processes e.g. from GO and KEGG.
+    - Comparing the expression profiles to published reference datasets where each sample or cell has already been annotated with its putative biological state by domain experts.
+- **Assigning cell labels from reference data:**
+    - Labels can be assigned to each cell in our uncharacterized dataset based on the most similar reference sample (using ml methods like random forests and support vector machines).
+    - **SingleR** method assigns labels to cells based on the reference samples with the highest Spearman rank correlations, using only the marker genes between pairs of labels to focus on the relevant differences between cell types. It also performs a fine-tuning step for each cell where the correlations are recomputed with just the marker genes for the top-scoring labels.
+    - Analysis is restricted by the diversity and resolution of the available labels which is overcome by de novo identification of clusters.
 
 ```{r, eval=FALSE}
+# Assigning cell labels from reference data---------------------------------------------------------------------------------------------
+## Using existing references
+
+# It is possible to run SingleR on the raw counts without any a priori quality control
+sce.pbmc <- readRDS("OSCA_datasets/OSCA_Basics/sce.pbmc_processed.rds")
+
+# Celldex contains a number of curated reference datasets, assembled from bulk RNA-seq or microarray data of sorted cell types
+# These are good enough provided they contain the cell types that are expected in the test population
+library(celldex)
+ref <- BlueprintEncodeData()
+
+library(SingleR)
+pred <- SingleR(test=sce.pbmc, ref=ref, labels=ref$label.main)
+# Returns a dataframe where each row correspond to a cell in the test dataset and contains its label assignments
+# We can also use the labels in ref$label.fine which provides more resolution at the cost of speed and increased ambiguity in the assignments
+table(pred$labels)
+
+# Ideally, each cell should exhibit a high score in one label relative to all of the others, indicating that the assignment to that label was unambiguous.
+# Heatmap of the assignment score for each cell (column) and label (row). Scores are shown before any fine-tuning and are normalized to [0, 1] within each cell.
+plotScoreHeatmap(pred)
+# Several clusters are nested within the monocyte and B cell labels, indicating that the clustering represents finer subdivisions within the cell types.
+# The clustering does not effectively distinguish between CD4+ and CD8+ T cell labels due to the presence of other factors of heterogeneity within the T cell subpopulation (e.g., activation) that have a stronger influence on unsupervised methods than the CD4+/CD8+ distinction.
+
+library(SingleCellExperiment)
+tab <- table(Assigned=pred$pruned.labels, Cluster=colLabels(sce.pbmc))
+
+# Adding a pseudo-count of 10 to avoid strong color jumps with just 1 cell.
+library(pheatmap)
+# Heatmap of the distribution of cells across labels and clusters in the 10X PBMC dataset. Color scale is reported in the log10-number of cells for each cluster-label combination.
+pheatmap(log2(tab+10), color=colorRampPalette(c("white", "blue"))(101))
+
+## Using custom references
 
 ```
 
@@ -1758,4 +1797,10 @@ plotExpression(sce.pbmc, features=c("CD14", "CD68",
 
 # Saving the processed dataset-----------------------------------------------
 saveRDS(sce.pbmc, "OSCA_datasets/OSCA_Basics/sce.pbmc_processed.rds")
+```
+
+## Muraro human pancreas (CEL-seq)
+
+```{r}
+## 
 ```

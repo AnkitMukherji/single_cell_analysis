@@ -2,6 +2,7 @@
 
 !.gitignore
 !README.md
+!Dockerfile
 !single_cell.qmd
 !osca.qmd
 !.Rprofile

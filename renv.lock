@@ -25,6 +25,10 @@
       {
         "Name": "BioCbooks",
         "URL": "https://bioconductor.org/packages/3.22/books"
+      },
+      {
+        "Name": "BioCcontainers",
+        "URL": "https://bioconductor.org/packages/3.22/container-binaries/bioconductor_docker"
       }
     ]
   },
@@ -87,12 +91,13 @@
       "biocViews": "SingleCell, GeneSetEnrichment, Transcriptomics, Transcription, GeneExpression, WorkflowStep, Normalization",
       "VignetteBuilder": "knitr",
       "RoxygenNote": "7.2.0",
-      "Config/pak/sysreqs": "make libicu-dev libpng-dev libxml2-dev libssl-dev zlib1g-dev",
+      "Config/pak/sysreqs": "cmake make libicu-dev libpng-dev libuv1-dev libxml2-dev libssl-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
+      "NeedsCompilation": "no",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/AUCell",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "a57f250c342d048ce388ef5c2c082ad6a354115a",
-      "NeedsCompilation": "no"
+      "RemoteSha": "a57f250c342d048ce388ef5c2c082ad6a354115a"
     },
     "AnnotationDbi": {
       "Package": "AnnotationDbi",
@@ -143,10 +148,11 @@
       "Collate": "00RTobjs.R AllGenerics.R AllClasses.R unlist2.R utils.R SQL.R FlatBimap.R AnnDbObj-lowAPI.R Bimap.R GOTerms.R BimapFormatting.R Bimap-envirAPI.R flatten.R methods-AnnotationDb.R methods-SQLiteConnection.R methods-geneCentricDbs.R methods-geneCentricDbs-keys.R methods-ReactomeDb.R methods-OrthologyDb.R loadDb.R createAnnObjs-utils.R createAnnObjs.NCBIORG_DBs.R createAnnObjs.NCBICHIP_DBs.R createAnnObjs.ORGANISM_DB.R createAnnObjs.YEASTCHIP_DB.R createAnnObjs.COELICOLOR_DB.R createAnnObjs.ARABIDOPSISCHIP_DB.R createAnnObjs.MALARIA_DB.R createAnnObjs.YEAST_DB.R createAnnObjs.YEASTNCBI_DB.R createAnnObjs.ARABIDOPSIS_DB.R createAnnObjs.GO_DB.R createAnnObjs.KEGG_DB.R createAnnObjs.PFAM_DB.R AnnDbPkg-templates-common.R AnnDbPkg-checker.R print.probetable.R makeMap.R inpIDMapper.R test_AnnotationDbi_package.R",
       "Config/pak/sysreqs": "libpng-dev libssl-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
+      "NeedsCompilation": "no",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/AnnotationDbi",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "ffdaf5d5dda16995f1afb7276be8f96cf738e16b",
-      "NeedsCompilation": "no"
+      "RemoteSha": "ffdaf5d5dda16995f1afb7276be8f96cf738e16b"
     },
     "AnnotationFilter": {
       "Package": "AnnotationFilter",
@@ -181,12 +187,13 @@
       "RoxygenNote": "6.0.1",
       "Collate": "'AllGenerics.R' 'AnnotationFilter.R' 'AnnotationFilterList.R' 'translate-utils.R'",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/AnnotationFilter",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "730457fdac505f620303c35b89ef58eafbfae6b7",
       "NeedsCompilation": "no",
       "Author": "Martin Morgan [aut], Johannes Rainer [aut], Joachim Bargsten [ctb], Daniel Van Twisk [ctb], Bioconductor Package Maintainer [cre]",
-      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
+      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/AnnotationFilter",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "730457fdac505f620303c35b89ef58eafbfae6b7"
     },
     "AnnotationHub": {
       "Package": "AnnotationHub",
@@ -329,16 +336,15 @@
         "R (>= 4.0.0)"
       ],
       "Config/Needs/website": "pkgdown, devtools, uwot, irlba, RcppHNSW, igraph, BiocManager, bioc::BSgenome.Hsapiens.UCSC.hg38, github::GreenleafLab/motifmatchr, github::GreenleafLab/chromVARmotifs, png, magrittr",
+      "Author": "Benjamin Parks [aut, cre, cph] (ORCID: <https://orcid.org/0000-0002-0261-7472>), Immanuel Abdi [aut], Stanford University [cph, fnd], Genentech, Inc. [cph, fnd]",
+      "Maintainer": "Benjamin Parks <bparks@alumni.stanford.edu>",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "BPCells",
       "RemoteUsername": "bnprks",
       "RemoteRef": "HEAD",
       "RemoteSha": "c293a0a34e653c395c8e9bf9ed3133107324d7b7",
-      "RemoteSubdir": "r",
-      "NeedsCompilation": "yes",
-      "Author": "Benjamin Parks [aut, cre, cph] (ORCID: <https://orcid.org/0000-0002-0261-7472>), Immanuel Abdi [aut], Stanford University [cph, fnd], Genentech, Inc. [cph, fnd]",
-      "Maintainer": "Benjamin Parks <bparks@alumni.stanford.edu>"
+      "RemoteSubdir": "r"
     },
     "BSgenome": {
       "Package": "BSgenome",
@@ -393,12 +399,13 @@
       "Collate": "utils.R OnDiskLongTable_old-class.R OnDiskLongTable-class.R OnDiskNamedSequences-class.R SNPlocs-class.R ODLT_SNPlocs-class.R OldFashionSNPlocs-class.R InjectSNPsHandler-class.R XtraSNPlocs-class.R BSgenome-class.R available.genomes.R injectSNPs.R getSeq-methods.R extractAt-methods.R bsapply.R BSgenomeViews-class.R BSgenome-utils.R export-methods.R AdvancedBSgenomeForge.R",
       "Config/pak/sysreqs": "make libbz2-dev liblzma-dev libxml2-dev libssl-dev xz-utils zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/BSgenome",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "8f40a3174a00d1d2bed3b8184189aa96d23019c6",
       "NeedsCompilation": "no",
       "Author": "Hervé Pagès [aut, cre]",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/BSgenome",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "8f40a3174a00d1d2bed3b8184189aa96d23019c6"
     },
     "Biobase": {
       "Package": "Biobase",
@@ -433,12 +440,13 @@
       "LazyLoad": "yes",
       "Collate": "tools.R strings.R environment.R vignettes.R packages.R AllGenerics.R VersionsClass.R VersionedClasses.R methods-VersionsNull.R methods-VersionedClass.R DataClasses.R methods-aggregator.R methods-container.R methods-MIAxE.R methods-MIAME.R methods-AssayData.R methods-AnnotatedDataFrame.R methods-eSet.R methods-ExpressionSet.R methods-MultiSet.R methods-SnpSet.R methods-NChannelSet.R anyMissing.R rowOp-methods.R updateObjectTo.R methods-ScalarObject.R zzz.R",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/Biobase",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "9964e1563d0652a9f2e77dbac543463dc482b425",
       "NeedsCompilation": "yes",
       "Author": "R. Gentleman [aut], V. Carey [aut], M. Morgan [aut], S. Falcon [aut], Haleema Khan [ctb] ('esApply' and 'BiobaseDevelopment' vignette translation from Sweave to Rmarkdown / HTML), Bioconductor Package Maintainer [cre]",
-      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
+      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/Biobase",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "9964e1563d0652a9f2e77dbac543463dc482b425"
     },
     "BiocBaseUtils": {
       "Package": "BiocBaseUtils",
@@ -469,12 +477,13 @@
       "VignetteBuilder": "knitr",
       "Date": "2025-07-14",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/BiocBaseUtils",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "756163a56486f2a5247073883b0948a033ccb637",
       "NeedsCompilation": "no",
       "Author": "Marcel Ramos [aut, cre] (ORCID: <https://orcid.org/0000-0002-3242-0582>), Martin Morgan [ctb], Hervé Pagès [ctb]",
-      "Maintainer": "Marcel Ramos <marcel.ramos@sph.cuny.edu>"
+      "Maintainer": "Marcel Ramos <marcel.ramos@sph.cuny.edu>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/BiocBaseUtils",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "756163a56486f2a5247073883b0948a033ccb637"
     },
     "BiocFileCache": {
       "Package": "BiocFileCache",
@@ -514,12 +523,13 @@
       ],
       "Config/pak/sysreqs": "libicu-dev libssl-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/BiocFileCache",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "81fd6e050ff6cae6ce7633e051bd86ee7c3f0e3c",
       "NeedsCompilation": "no",
       "Author": "Lori Shepherd [aut, cre], Martin Morgan [aut]",
-      "Maintainer": "Lori Shepherd <lori.shepherd@roswellpark.org>"
+      "Maintainer": "Lori Shepherd <lori.shepherd@roswellpark.org>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/BiocFileCache",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "81fd6e050ff6cae6ce7633e051bd86ee7c3f0e3c"
     },
     "BiocGenerics": {
       "Package": "BiocGenerics",
@@ -570,12 +580,13 @@
       ],
       "Collate": "S3-classes-as-S4-classes.R utils.R normarg-utils.R replaceSlots.R aperm.R append.R as.data.frame.R as.list.R as.vector.R cbind.R do.call.R duplicated.R eval.R Extremes.R format.R funprog.R get.R grep.R is.unsorted.R lapply.R mapply.R match.R mean.R nrow.R order.R paste.R rank.R rep.R row_colnames.R saveRDS.R sort.R start.R subset.R t.R table.R tapply.R unique.R unlist.R unsplit.R which.R which.min.R relist.R boxplot.R image.R density.R IQR.R mad.R residuals.R var.R weights.R xtabs.R setops.R annotation.R combine.R containsOutOfMemoryData.R dbconn.R dge.R dims.R fileName.R longForm.R normalize.R Ontology.R organism_species.R paste2.R path.R plotMA.R plotPCA.R score.R strand.R toTable.R type.R updateObject.R testPackage.R zzz.R",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/BiocGenerics",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "16cf16df6e7c4a0f76e959bf858c5c0990543522",
       "NeedsCompilation": "no",
       "Author": "The Bioconductor Dev Team [aut], Hervé Pagès [aut, cre] (ORCID: <https://orcid.org/0009-0002-8272-4522>), Laurent Gatto [ctb] (ORCID: <https://orcid.org/0000-0002-1520-2268>), Nathaniel Hayden [ctb], James Hester [ctb], Wolfgang Huber [ctb], Michael Lawrence [ctb], Martin Morgan [ctb] (ORCID: <https://orcid.org/0000-0002-5874-8148>), Valerie Obenchain [ctb]",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/BiocGenerics",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "16cf16df6e7c4a0f76e959bf858c5c0990543522"
     },
     "BiocIO": {
       "Package": "BiocIO",
@@ -609,12 +620,13 @@
       "BugReports": "https://github.com/Bioconductor/BiocIO/issues",
       "Date": "2024-11-21",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/BiocIO",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "2810f6a6588c4d7ae07cd42d6f0b8c21fc387072",
       "NeedsCompilation": "no",
       "Author": "Martin Morgan [aut], Michael Lawrence [aut], Daniel Van Twisk [aut], Marcel Ramos [cre] (ORCID: <https://orcid.org/0000-0002-3242-0582>)",
-      "Maintainer": "Marcel Ramos <marcel.ramos@sph.cuny.edu>"
+      "Maintainer": "Marcel Ramos <marcel.ramos@sph.cuny.edu>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/BiocIO",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "2810f6a6588c4d7ae07cd42d6f0b8c21fc387072"
     },
     "BiocManager": {
       "Package": "BiocManager",
@@ -677,12 +689,13 @@
       "RoxygenNote": "7.3.2",
       "Encoding": "UTF-8",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/BiocNeighbors",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "c2ff286c1663d89bdba7faf8f7e8e31a5c99ef2c",
       "NeedsCompilation": "yes",
       "Author": "Aaron Lun [aut, cre, cph]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/BiocNeighbors",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "c2ff286c1663d89bdba7faf8f7e8e31a5c99ef2c"
     },
     "BiocParallel": {
       "Package": "BiocParallel",
@@ -739,12 +752,13 @@
       "VignetteBuilder": "knitr",
       "RoxygenNote": "7.1.2",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/BiocParallel",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "3d6f2f614a8cb6d052c3c89cb328cc7d454ff565",
       "NeedsCompilation": "yes",
       "Author": "Jiefei Wang [aut, cre], Martin Morgan [aut], Valerie Obenchain [aut], Michel Lang [aut], Ryan Thompson [aut], Nitesh Turaga [aut], Aaron Lun [ctb], Henrik Bengtsson [ctb], Madelyn Carlson [ctb] (Translated 'Random Numbers' vignette from Sweave to RMarkdown / HTML.), Phylis Atieno [ctb] (Translated 'Introduction to BiocParallel' vignette from Sweave to Rmarkdown / HTML.), Sergio Oller [ctb] (Improved bpmapply() efficiency., ORCID: <https://orcid.org/0000-0002-8994-1549>)",
-      "Maintainer": "Jiefei Wang <jiefei0804@gmail.com>"
+      "Maintainer": "Jiefei Wang <jiefei0804@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/BiocParallel",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "3d6f2f614a8cb6d052c3c89cb328cc7d454ff565"
     },
     "BiocSingular": {
       "Package": "BiocSingular",
@@ -790,12 +804,13 @@
       "URL": "https://github.com/LTLA/BiocSingular",
       "Config/pak/sysreqs": "zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/BiocSingular",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "d1108986ae7c998704c7c3dbe53bebf5b5b79d3d",
       "NeedsCompilation": "yes",
       "Author": "Aaron Lun [aut, cre, cph]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/BiocSingular",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "d1108986ae7c998704c7c3dbe53bebf5b5b79d3d"
     },
     "BiocStyle": {
       "Package": "BiocStyle",
@@ -850,12 +865,13 @@
       "Encoding": "UTF-8",
       "RoxygenNote": "6.0.1",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/BiocVersion",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "fea53ac938311018c7513d2339cdd5f928cd72c5",
       "NeedsCompilation": "no",
       "Author": "Martin Morgan [aut], Marcel Ramos [ctb], Bioconductor Package Maintainer [ctb, cre]",
-      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
+      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/BiocVersion",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "fea53ac938311018c7513d2339cdd5f928cd72c5"
     },
     "Biostrings": {
       "Package": "Biostrings",
@@ -913,12 +929,13 @@
       "Collate": "utils.R IUPAC_CODE_MAP.R AMINO_ACID_CODE.R GENETIC_CODE.R XStringCodec-class.R seqtype.R coloring.R XString-class.R XStringSet-class.R XStringSet-comparison.R XStringViews-class.R MaskedXString-class.R XStringSetList-class.R seqinfo-methods.R xscat.R XStringSet-io.R letter.R getSeq.R letterFrequency.R dinucleotideFrequencyTest.R chartr.R reverseComplement.R translate.R toComplex.R replaceAt.R replaceLetterAt.R injectHardMask.R padAndClip.R strsplit-methods.R misc.R SparseList-class.R MIndex-class.R lowlevel-matching.R match-utils.R matchPattern.R maskMotif.R matchLRPatterns.R trimLRPatterns.R matchProbePair.R matchPWM.R findPalindromes.R PDict-class.R matchPDict.R XStringPartialMatches-class.R XStringQuality-class.R QualityScaledXStringSet.R pmatchPattern.R MultipleAlignment.R matchprobes.R moved_to_pwalign.R zzz.R",
       "Config/pak/sysreqs": "zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/Biostrings",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "eda5d667ad05a73336d8c83a71f670198433232f",
       "NeedsCompilation": "yes",
       "Author": "Hervé Pagès [aut, cre], Patrick Aboyoun [aut], Robert Gentleman [aut], Saikat DebRoy [aut], Vince Carey [ctb], Nicolas Delhomme [ctb], Felix Ernst [ctb], Wolfgang Huber [ctb] ('matchprobes' vignette), Beryl Kanali [ctb] (Converted 'MultipleAlignments' vignette from Sweave to RMarkdown), Haleema Khan [ctb] (Converted 'matchprobes' vignette from Sweave to RMarkdown), Aidan Lakshman [ctb], Kieran O'Neill [ctb], Valerie Obenchain [ctb], Marcel Ramos [ctb], Albert Vill [ctb], Jen Wokaty [ctb] (Converted 'matchprobes' vignette from Sweave to RMarkdown), Erik Wright [ctb]",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/Biostrings",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "eda5d667ad05a73336d8c83a71f670198433232f"
     },
     "BumpyMatrix": {
       "Package": "BumpyMatrix",
@@ -948,12 +965,13 @@
       "URL": "https://bioconductor.org/packages/BumpyMatrix",
       "BugReports": "https://github.com/LTLA/BumpyMatrix/issues",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/BumpyMatrix",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "d16b5ea6bd388e1e636b1f1f06a8cac562ddd1c7",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cre], Genentech, Inc. [cph]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/BumpyMatrix",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "d16b5ea6bd388e1e636b1f1f06a8cac562ddd1c7"
     },
     "Cairo": {
       "Package": "Cairo",
@@ -1130,12 +1148,13 @@
       "RoxygenNote": "7.2.3",
       "Config/pak/sysreqs": "libpng-dev perl",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/ComplexHeatmap",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "880562b42a0cf2c190b461c045198463232a6305",
       "NeedsCompilation": "no",
       "Author": "Zuguang Gu [aut, cre] (ORCID: <https://orcid.org/0000-0002-7395-8709>)",
-      "Maintainer": "Zuguang Gu <guzuguang@suat-sz.edu.cn>"
+      "Maintainer": "Zuguang Gu <guzuguang@suat-sz.edu.cn>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/ComplexHeatmap",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "880562b42a0cf2c190b461c045198463232a6305"
     },
     "DBI": {
       "Package": "DBI",
@@ -1243,11 +1262,12 @@
       "Encoding": "UTF-8",
       "Config/pak/sysreqs": "zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
+      "NeedsCompilation": "yes",
+      "Author": "Michael Love [aut, cre], Constantin Ahlmann-Eltze [ctb], Kwame Forbes [ctb], Simon Anders [aut, ctb], Wolfgang Huber [aut, ctb], RADIANT EU FP7 [fnd], NIH NHGRI [fnd], CZI [fnd]",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/DESeq2",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "d90821a3153a27b2a6b727df7188ea7a5b8929fd",
-      "NeedsCompilation": "yes",
-      "Author": "Michael Love [aut, cre], Constantin Ahlmann-Eltze [ctb], Kwame Forbes [ctb], Simon Anders [aut, ctb], Wolfgang Huber [aut, ctb], RADIANT EU FP7 [fnd], NIH NHGRI [fnd], CZI [fnd]"
+      "RemoteSha": "d90821a3153a27b2a6b727df7188ea7a5b8929fd"
     },
     "DEoptimR": {
       "Package": "DEoptimR",
@@ -1357,13 +1377,17 @@
       ],
       "VignetteBuilder": "knitr",
       "Collate": "compress_atomic_vector.R makeCappedVolumeBox.R AutoBlock-global-settings.R AutoGrid.R blockApply.R DelayedOp-class.R DelayedSubset-class.R DelayedAperm-class.R DelayedUnaryIsoOpStack-class.R DelayedUnaryIsoOpWithArgs-class.R DelayedSubassign-class.R DelayedSetDimnames-class.R DelayedNaryIsoOp-class.R DelayedAbind-class.R showtree.R simplify.R DelayedArray-class.R DelayedArray-subsetting.R chunkGrid.R RealizationSink-class.R realize.R DelayedArray-utils.R DelayedArray-stats.R matrixStats-methods.R DelayedMatrix-rowsum.R DelayedMatrix-mult.R ConstantArray-class.R RleArraySeed-class.R RleArray-class.R compat.R zzz.R",
-      "Config/pak/sysreqs": "zlib1g-dev",
-      "Repository": "https://bioc-release.r-universe.dev",
+      "git_url": "https://git.bioconductor.org/packages/DelayedArray",
+      "git_branch": "RELEASE_3_22",
+      "git_last_commit": "adde054",
+      "git_last_commit_date": "2025-10-29",
+      "Repository": "Bioconductor 3.22",
+      "NeedsCompilation": "yes",
+      "Author": "Hervé Pagès [aut, cre], Aaron Lun [ctb], Peter Hickey [ctb]",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/DelayedArray",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "adde054570e321b0f9b9f24e8c6f88a7e3ac6116",
-      "NeedsCompilation": "yes",
-      "Author": "Hervé Pagès [aut, cre], Aaron Lun [ctb], Peter Hickey [ctb]"
+      "RemoteSha": "adde054570e321b0f9b9f24e8c6f88a7e3ac6116"
     },
     "DelayedMatrixStats": {
       "Package": "DelayedMatrixStats",
@@ -1406,12 +1430,13 @@
       "biocViews": "Infrastructure, DataRepresentation, Software",
       "Config/pak/sysreqs": "zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/DelayedMatrixStats",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "cbf7d75caf7c20af2ba47ef4c1f8346cccf55ab9",
       "NeedsCompilation": "no",
       "Author": "Peter Hickey [aut, cre] (ORCID: <https://orcid.org/0000-0002-8153-6258>), Hervé Pagès [ctb], Aaron Lun [ctb]",
-      "Maintainer": "Peter Hickey <peter.hickey@gmail.com>"
+      "Maintainer": "Peter Hickey <peter.hickey@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/DelayedMatrixStats",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "cbf7d75caf7c20af2ba47ef4c1f8346cccf55ab9"
     },
     "DoubletFinder": {
       "Package": "DoubletFinder",
@@ -1445,8 +1470,7 @@
       "RemoteRepo": "DoubletFinder",
       "RemoteUsername": "chris-mcginnis-ucsf",
       "RemoteRef": "HEAD",
-      "RemoteSha": "1b244d8f0d54b4b1cb4365639931bbb16f01e1cd",
-      "NeedsCompilation": "no"
+      "RemoteSha": "1b244d8f0d54b4b1cb4365639931bbb16f01e1cd"
     },
     "DropletTestFiles": {
       "Package": "DropletTestFiles",
@@ -1544,11 +1568,12 @@
       "Encoding": "UTF-8",
       "Config/pak/sysreqs": "make libssl-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
+      "Author": "Aaron Lun [aut], Jonathan Griffiths [ctb, cre], Davis McCarthy [ctb], Dongze He [ctb], Rob Patro [ctb]",
+      "Maintainer": "Jonathan Griffiths <jonathan.griffiths.94@gmail.com>",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/DropletUtils",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "6ef5eaaeb94aa2cf45e116852a9c315139e2a869",
-      "Author": "Aaron Lun [aut], Jonathan Griffiths [ctb, cre], Davis McCarthy [ctb], Dongze He [ctb], Rob Patro [ctb]",
-      "Maintainer": "Jonathan Griffiths <jonathan.griffiths.94@gmail.com>"
+      "RemoteSha": "6ef5eaaeb94aa2cf45e116852a9c315139e2a869"
     },
     "EnsDb.Hsapiens.v75": {
       "Package": "EnsDb.Hsapiens.v75",
@@ -1630,12 +1655,13 @@
       "RoxygenNote": "7.0.0",
       "Config/pak/sysreqs": "libicu-dev libpng-dev libssl-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/ExperimentHub",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "b1013ecd115292bbf8fad90b14e6e33b7f3467c1",
       "NeedsCompilation": "no",
       "Author": "Bioconductor Package Maintainer [cre], Martin Morgan [aut], Marc Carlson [ctb], Dan Tenenbaum [ctb], Sonali Arora [ctb], Valerie Oberchain [ctb], Kayla Morrell [ctb], Lori Shepherd [aut]",
-      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
+      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/ExperimentHub",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "b1013ecd115292bbf8fad90b14e6e33b7f3467c1"
     },
     "FNN": {
       "Package": "FNN",
@@ -1735,12 +1761,13 @@
       "biocViews": "GeneExpression, GeneSetEnrichment, GraphAndNetwork, GO, KEGG",
       "Config/pak/sysreqs": "libpng-dev libxml2-dev libssl-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/GSEABase",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "8f4e176962268e1a366d812f615c8ae6bc98b0f8",
       "NeedsCompilation": "no",
       "Author": "Martin Morgan [aut], Seth Falcon [aut], Robert Gentleman [aut], Paul Villafuerte [ctb] ('GSEABase' vignette translation from Sweave to Rmarkdown / HTML), Bioconductor Package Maintainer [cre]",
-      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
+      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/GSEABase",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "8f4e176962268e1a366d812f615c8ae6bc98b0f8"
     },
     "GenomeInfoDb": {
       "Package": "GenomeInfoDb",
@@ -1789,12 +1816,13 @@
       "Collate": "utils.R fetch_table_dump_from_Ensembl_FTP.R list_ftp_dir.R NCBI-utils.R UCSC-utils.R Ensembl-utils.R getChromInfoFromNCBI.R getChromInfoFromUCSC.R getChromInfoFromEnsembl.R loadTaxonomyDb.R mapGenomeBuilds.R seqlevelsStyle.R seqlevels-wrappers.R zzz.R",
       "Config/pak/sysreqs": "libssl-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/GenomeInfoDb",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "149c9caca06d2572b64b8b8119ddb622e72b8edb",
       "NeedsCompilation": "no",
       "Author": "Sonali Arora [aut], Martin Morgan [aut], Marc Carlson [aut], Hervé Pagès [aut, cre], Prisca Chidimma Maduka [ctb], Atuhurira Kirabo Kakopo [ctb], Haleema Khan [ctb] (vignette translation from Sweave to Rmarkdown / HTML), Emmanuel Chigozie Elendu [ctb]",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/GenomeInfoDb",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "149c9caca06d2572b64b8b8119ddb622e72b8edb"
     },
     "GenomicAlignments": {
       "Package": "GenomicAlignments",
@@ -1859,12 +1887,13 @@
       "VignetteBuilder": "knitr",
       "Config/pak/sysreqs": "libbz2-dev liblzma-dev xz-utils zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/GenomicAlignments",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "4bd0167682d68ad1b93bee8908685116a925db6a",
       "NeedsCompilation": "yes",
       "Author": "Hervé Pagès [aut, cre], Valerie Obenchain [aut], Martin Morgan [aut], Fedor Bezrukov [ctb], Robert Castelo [ctb], Halimat C. Atanda [ctb] (Translated 'WorkingWithAlignedNucleotides' vignette from Sweave to RMarkdown / HTML.)",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/GenomicAlignments",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "4bd0167682d68ad1b93bee8908685116a925db6a"
     },
     "GenomicFeatures": {
       "Package": "GenomicFeatures",
@@ -1927,12 +1956,13 @@
       "Collate": "utils.R TxDb-schema.R TxDb-SELECT-helpers.R TxDb-class.R FeatureDb-class.R mapIdsToRanges.R id2name.R transcripts.R transcriptsBy.R transcriptsByOverlaps.R transcriptLengths.R exonicParts.R extendExonsIntoIntrons.R features.R tRNAs.R extractTranscriptSeqs.R extractUpstreamSeqs.R getPromoterSeq-methods.R select-methods.R nearest-methods.R transcriptLocs2refLocs.R coordinate-mapping-methods.R proteinToGenome.R coverageByTranscript.R makeTxDb.R makeTxDbFromUCSC.R makeTxDbFromBiomart.R makeTxDbFromEnsembl.R makeTxDbFromGRanges.R makeTxDbFromGFF.R makeFeatureDbFromUCSC.R makeTxDbPackage.R zzz.R",
       "Config/pak/sysreqs": "make libbz2-dev liblzma-dev libpng-dev libxml2-dev libssl-dev xz-utils zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/GenomicFeatures",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "f4dfd41fa2fe124ef02462fc8d3fac7f698954fc",
       "NeedsCompilation": "no",
       "Author": "H. Pagès [aut, cre], M. Carlson [aut], P. Aboyoun [aut], S. Falcon [aut], M. Morgan [aut], D. Sarkar [aut], M. Lawrence [aut], V. Obenchain [aut], S. Arora [ctb], J. MacDonald [ctb], M. Ramos [ctb], S. Saini [ctb], P. Shannon [ctb], L. Shepherd [ctb], D. Tenenbaum [ctb], D. Van Twisk [ctb]",
-      "Maintainer": "H. Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "H. Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/GenomicFeatures",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "f4dfd41fa2fe124ef02462fc8d3fac7f698954fc"
     },
     "GenomicRanges": {
       "Package": "GenomicRanges",
@@ -2004,12 +2034,13 @@
       "VignetteBuilder": "knitr",
       "Collate": "normarg-utils.R utils.R phicoef.R transcript-utils.R constraint.R strand-utils.R genomic-range-squeezers.R GenomicRanges-class.R GenomicRanges-comparison.R GRanges-class.R GPos-class.R GRangesFactor-class.R DelegatingGenomicRanges-class.R GNCList-class.R GenomicRangesList-class.R GRangesList-class.R makeGRangesFromDataFrame.R makeGRangesListFromDataFrame.R RangedData-methods.R findOverlaps-methods.R intra-range-methods.R inter-range-methods.R coverage-methods.R setops-methods.R subtract-methods.R nearest-methods.R absoluteRanges.R tileGenome.R tile-methods.R genomicvars.R zzz.R",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/GenomicRanges",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "ce11a45400f198fbede382bf1f0ad137ef2d8a96",
       "NeedsCompilation": "yes",
       "Author": "Patrick Aboyoun [aut], Hervé Pagès [aut, cre], Michael Lawrence [aut], Sonali Arora [ctb], Martin Morgan [ctb], Kayla Morrell [ctb], Valerie Obenchain [ctb], Marcel Ramos [ctb], Lori Shepherd [ctb], Dan Tenenbaum [ctb], Daniel van Twisk [ctb]",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/GenomicRanges",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "ce11a45400f198fbede382bf1f0ad137ef2d8a96"
     },
     "GetoptLong": {
       "Package": "GetoptLong",
@@ -2174,12 +2205,13 @@
       "Collate": "utils.R h5utils.R HDF5ArraySeed-class.R HDF5Array-class.R ReshapedHDF5ArraySeed-class.R ReshapedHDF5Array-class.R dump-management.R writeHDF5Array.R saveHDF5SummarizedExperiment.R H5SparseMatrixSeed-class.R H5SparseMatrix-class.R H5ADMatrixSeed-class.R H5ADMatrix-class.R TENxMatrixSeed-class.R TENxMatrix-class.R writeTENxMatrix.R zzz.R",
       "Config/pak/sysreqs": "libssl-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/HDF5Array",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "9bca08f886ec15fa872dd8f96a7c9bb3b791df8b",
       "NeedsCompilation": "no",
       "Author": "Hervé Pagès [aut, cre] (ORCID: <https://orcid.org/0009-0002-8272-4522>)",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/HDF5Array",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "9bca08f886ec15fa872dd8f96a7c9bb3b791df8b"
     },
     "Hmisc": {
       "Package": "Hmisc",
@@ -2294,12 +2326,13 @@
       ],
       "Collate": "thread-control.R range-squeezers.R Vector-class-leftovers.R DataFrameList-class.R DataFrameList-utils.R AtomicList-class.R AtomicList-utils.R Ranges-and-RangesList-classes.R IPosRanges-class.R IPosRanges-comparison.R IntegerRangesList-class.R IRanges-class.R IRanges-constructor.R makeIRangesFromDataFrame.R IRanges-utils.R Rle-class-leftovers.R IPos-class.R subsetting-utils.R Grouping-class.R Views-class.R RleViews-class.R RleViews-summarization.R extractList.R seqapply.R multisplit.R SimpleGrouping-class.R IRangesList-class.R IPosList-class.R ViewsList-class.R RleViewsList-class.R RleViewsList-utils.R RangedSelection-class.R MaskCollection-class.R read.Mask.R CompressedList-class.R CompressedList-comparison.R CompressedHitsList-class.R CompressedDataFrameList-class.R CompressedAtomicList-class.R CompressedAtomicList-summarization.R CompressedGrouping-class.R CompressedRangesList-class.R Hits-class-leftovers.R NCList-class.R findOverlaps-methods.R windows-methods.R intra-range-methods.R inter-range-methods.R reverse-methods.R coverage-methods.R cvg-methods.R slice-methods.R setops-methods.R nearest-methods.R cbind-Rle-methods.R tile-methods.R extractListFragments.R zzz.R",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/IRanges",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "964a2904e15d5352da6bcb1e0f55fcf62a09ce59",
       "NeedsCompilation": "yes",
       "Author": "Hervé Pagès [aut, cre], Patrick Aboyoun [aut], Michael Lawrence [aut]",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/IRanges",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "964a2904e15d5352da6bcb1e0f55fcf62a09ce59"
     },
     "KEGGREST": {
       "Package": "KEGGREST",
@@ -2333,12 +2366,13 @@
       "Date": "2025-06-18",
       "Config/pak/sysreqs": "libpng-dev libssl-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/KEGGREST",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "bb924dc5faa2bec562866275b08b1b2f98e30a07",
       "NeedsCompilation": "no",
       "Author": "Dan Tenenbaum [aut], Bioconductor Package Maintainer [aut, cre], Martin Morgan [ctb], Kozo Nishida [ctb], Marcel Ramos [ctb], Kristina Riemer [ctb], Lori Shepherd [ctb], Jeremy Volkening [ctb]",
-      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
+      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/KEGGREST",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "bb924dc5faa2bec562866275b08b1b2f98e30a07"
     },
     "KernSmooth": {
       "Package": "KernSmooth",
@@ -2406,10 +2440,11 @@
       "RoxygenNote": "7.1.1",
       "Config/pak/sysreqs": "libicu-dev libssl-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
+      "NeedsCompilation": "no",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/LoomExperiment",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "4b227efbd4772245e231c34da4787bd7a6777b1e",
-      "NeedsCompilation": "no"
+      "RemoteSha": "4b227efbd4772245e231c34da4787bd7a6777b1e"
     },
     "MASS": {
       "Package": "MASS",
@@ -2523,12 +2558,13 @@
       "Roxygen": "list(markdown = TRUE, old_usage = TRUE)",
       "Collate": "'MatrixGenerics-package.R' 'rowAlls.R' 'rowAnyNAs.R' 'rowAnys.R' 'rowAvgsPerColSet.R' 'rowCollapse.R' 'rowCounts.R' 'rowCummaxs.R' 'rowCummins.R' 'rowCumprods.R' 'rowCumsums.R' 'rowDiffs.R' 'rowIQRDiffs.R' 'rowIQRs.R' 'rowLogSumExps.R' 'rowMadDiffs.R' 'rowMads.R' 'rowMaxs.R' 'rowMeans.R' 'rowMeans2.R' 'rowMedians.R' 'rowMins.R' 'rowOrderStats.R' 'rowProds.R' 'rowQuantiles.R' 'rowRanges.R' 'rowRanks.R' 'rowSdDiffs.R' 'rowSds.R' 'rowSums.R' 'rowSums2.R' 'rowTabulates.R' 'rowVarDiffs.R' 'rowVars.R' 'rowWeightedMads.R' 'rowWeightedMeans.R' 'rowWeightedMedians.R' 'rowWeightedSds.R' 'rowWeightedVars.R'",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/MatrixGenerics",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "75d9a54ae570634c1c0d7f3c90958461ac8f6428",
       "NeedsCompilation": "no",
       "Author": "Constantin Ahlmann-Eltze [aut] (ORCID: <https://orcid.org/0000-0002-3762-068X>), Peter Hickey [aut, cre] (ORCID: <https://orcid.org/0000-0002-8153-6258>), Hervé Pagès [aut]",
-      "Maintainer": "Peter Hickey <peter.hickey@gmail.com>"
+      "Maintainer": "Peter Hickey <peter.hickey@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/MatrixGenerics",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "75d9a54ae570634c1c0d7f3c90958461ac8f6428"
     },
     "MatrixModels": {
       "Package": "MatrixModels",
@@ -2614,7 +2650,7 @@
       "BugReports": "https://github.com/waldronlab/MultiAssayExperiment/issues",
       "Depends": [
         "SummarizedExperiment",
-        "R (>= 4.4.0)"
+        "R (>= 4.5.0)"
       ],
       "Imports": [
         "Biobase",
@@ -2651,14 +2687,18 @@
       "Video": "https://youtu.be/w6HWAHaDpyk, https://youtu.be/Vh0hVVUKKFM",
       "Collate": "'ExperimentList-class.R' 'MultiAssayExperiment-class.R' 'MatchedAssayExperiment-class.R' 'subsetBy-methods.R' 'MultiAssayExperiment-subset.R' 'MultiAssayExperiment-methods.R' 'MultiAssayExperiment-helpers.R' 'MultiAssayExperiment-pkg.R' 'MultiAssayExperimentToMAF.R' 'assay-methods.R' 'data.R' 'hasAssay.R' 'listToMap.R' 'longFormat-defunct.R' 'mapToList.R' 'prepMultiAssay.R' 'reexports.R' 'saveHDF5MultiAssayExperiment.R' 'upsetSamples.R' 'utilities.R'",
       "Date": "2025-08-18",
-      "Config/pak/sysreqs": "libicu-dev zlib1g-dev",
-      "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/MultiAssayExperiment",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "9f37c70bebef4ef08da6f930d7251eddc6114168",
+      "git_url": "https://git.bioconductor.org/packages/MultiAssayExperiment",
+      "git_branch": "RELEASE_3_22",
+      "git_last_commit": "9f37c70",
+      "git_last_commit_date": "2025-11-17",
+      "Repository": "Bioconductor 3.22",
       "NeedsCompilation": "no",
       "Author": "Marcel Ramos [aut, cre] (ORCID: <https://orcid.org/0000-0002-3242-0582>), Martin Morgan [aut, ctb], Lori Shepherd [ctb], Hervé Pagès [ctb], Vincent J Carey [aut, ctb], Levi Waldron [aut], MultiAssay SIG [ctb]",
-      "Maintainer": "Marcel Ramos <marcel.ramos@sph.cuny.edu>"
+      "Maintainer": "Marcel Ramos <marcel.ramos@sph.cuny.edu>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/MultiAssayExperiment",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "9f37c70bebef4ef08da6f930d7251eddc6114168"
     },
     "OSCA.advanced": {
       "Package": "OSCA.advanced",
@@ -3017,12 +3057,13 @@
       "Encoding": "UTF-8",
       "Config/pak/sysreqs": "libicu-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/PCAtools",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "97f269b88c8fa5954aacb152bfd3519e355b7383",
       "NeedsCompilation": "yes",
       "Author": "Kevin Blighe [aut], Jared Andrews [aut, cre] (ORCID: <https://orcid.org/0000-0002-0780-6248>), Anna-Leigh Brown [ctb], Vincent Carey [ctb], Guido Hooiveld [ctb], Aaron Lun [aut, ctb]",
-      "Maintainer": "Jared Andrews <jared.andrews07@gmail.com>"
+      "Maintainer": "Jared Andrews <jared.andrews07@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/PCAtools",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "97f269b88c8fa5954aacb152bfd3519e355b7383"
     },
     "ProtGenerics": {
       "Package": "ProtGenerics",
@@ -3044,6 +3085,7 @@
       "NeedsCompilation": "no",
       "RoxygenNote": "7.3.2",
       "Repository": "https://bioc-release.r-universe.dev",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/ProtGenerics",
       "RemoteRef": "RELEASE_3_22",
       "RemoteSha": "672cf15787b9e832d534ba543375f8ae574fb603"
@@ -3216,7 +3258,8 @@
       "NeedsCompilation": "yes",
       "Author": "CRAN Team [ctb, cre] (de facto maintainer since 2013), Duncan Temple Lang [aut] (<https://orcid.org/0000-0003-0159-1546>)",
       "Maintainer": "CRAN Team <CRAN@r-project.org>",
-      "Repository": "CRAN"
+      "Repository": "RSPM",
+      "Encoding": "UTF-8"
     },
     "RMTstat": {
       "Package": "RMTstat",
@@ -3560,7 +3603,8 @@
       "NeedsCompilation": "yes",
       "Author": "Zachary DeBruine [aut, cre] (<https://orcid.org/0000-0003-2234-4827>)",
       "Maintainer": "Zachary DeBruine <zacharydebruine@gmail.com>",
-      "Repository": "CRAN"
+      "Repository": "RSPM",
+      "Encoding": "UTF-8"
     },
     "RcppProgress": {
       "Package": "RcppProgress",
@@ -3708,12 +3752,13 @@
       "URL": "https://github.com/LTLA/ResidualMatrix",
       "Config/pak/sysreqs": "zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/ResidualMatrix",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "87f8d9c30b8a7e2d153761daf2ebbf261fa36021",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cre, cph]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/ResidualMatrix",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "87f8d9c30b8a7e2d153761daf2ebbf261fa36021"
     },
     "Rhdf5lib": {
       "Package": "Rhdf5lib",
@@ -3745,12 +3790,13 @@
       "RoxygenNote": "7.1.2",
       "Config/pak/sysreqs": "make",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/Rhdf5lib",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "f62ae289bd6cdd27f8d2f924d6578d3b344fc396",
       "NeedsCompilation": "yes",
       "Author": "Mike Smith [ctb] (ORCID: <https://orcid.org/0000-0002-7800-3848>), Hugo Gruson [cre] (ORCID: <https://orcid.org/0000-0002-4094-1476>), The HDF Group [cph]",
-      "Maintainer": "Hugo Gruson <hugo.gruson@embl.de>"
+      "Maintainer": "Hugo Gruson <hugo.gruson@embl.de>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/Rhdf5lib",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "f62ae289bd6cdd27f8d2f924d6578d3b344fc396"
     },
     "RhpcBLASctl": {
       "Package": "RhpcBLASctl",
@@ -3793,12 +3839,13 @@
       "VignetteBuilder": "knitr",
       "Config/pak/sysreqs": "make libbz2-dev liblzma-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/Rhtslib",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "c4b72688b780f30afaea12959a11f7a5b5f65f94",
       "NeedsCompilation": "yes",
       "Author": "Nathaniel Hayden [led, aut], Martin Morgan [aut], Hervé Pagès [aut, cre], Tomas Kalibera [ctb], Jeroen Ooms [ctb]",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/Rhtslib",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "c4b72688b780f30afaea12959a11f7a5b5f65f94"
     },
     "Rigraphlib": {
       "Package": "Rigraphlib",
@@ -3827,11 +3874,12 @@
       "Encoding": "UTF-8",
       "RoxygenNote": "7.3.2",
       "Repository": "https://bioc-release.r-universe.dev",
+      "Author": "Aaron Lun [cre, aut]",
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/Rigraphlib",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "e14ac37a0227794f440f57f9d572b75944d108ae",
-      "Author": "Aaron Lun [cre, aut]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "RemoteSha": "e14ac37a0227794f440f57f9d572b75944d108ae"
     },
     "Rsamtools": {
       "Package": "Rsamtools",
@@ -3889,12 +3937,13 @@
       "VignetteBuilder": "knitr",
       "Config/pak/sysreqs": "make libbz2-dev liblzma-dev xz-utils zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/Rsamtools",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "ea99fb0d9481cc7c8f2734ddefb6892abba37d59",
       "NeedsCompilation": "yes",
       "Author": "Martin Morgan [aut], Hervé Pagès [aut], Valerie Obenchain [aut], Nathaniel Hayden [aut], Busayo Samuel [ctb] (Converted Rsamtools vignette from Sweave to RMarkdown / HTML.), Bioconductor Package Maintainer [cre]",
-      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
+      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/Rsamtools",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "ea99fb0d9481cc7c8f2734ddefb6892abba37d59"
     },
     "Rtsne": {
       "Package": "Rtsne",
@@ -3965,12 +4014,13 @@
       "VignetteBuilder": "knitr",
       "Collate": "utils.R rowsum.R abind.R aperm2.R array_selection.R Nindex-utils.R arep.R array_recycling.R Array-class.R dim-tuning-utils.R Array-subsetting.R Array-subassignment.R ArrayGrid-class.R mapToGrid.R extract_array.R type.R is_sparse.R read_block.R write_block.R show-utils.R Array-kronecker-methods.R zzz.R",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/S4Arrays",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "a4cccbaab0d12176db3670665f0ca6c23bb900be",
       "NeedsCompilation": "yes",
       "Author": "Hervé Pagès [aut, cre] (ORCID: <https://orcid.org/0009-0002-8272-4522>), Jacques Serizay [ctb]",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/S4Arrays",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "a4cccbaab0d12176db3670665f0ca6c23bb900be"
     },
     "S4Vectors": {
       "Package": "S4Vectors",
@@ -4008,12 +4058,13 @@
       "VignetteBuilder": "knitr",
       "Collate": "S4-utils.R show-utils.R utils.R normarg-utils.R bindROWS.R LLint-class.R isSorted.R subsetting-utils.R vector-utils.R integer-utils.R character-utils.R raw-utils.R eval-utils.R map_ranges_to_runs.R RectangularData-class.R Annotated-class.R DataFrame_OR_NULL-class.R Vector-class.R Vector-comparison.R Vector-setops.R Vector-merge.R Hits-class.R Hits-comparison.R Hits-setops.R Rle-class.R Rle-utils.R Factor-class.R List-class.R List-comparison.R splitAsList.R List-utils.R SimpleList-class.R HitsList-class.R DataFrame-class.R DataFrame-combine.R DataFrame-comparison.R DataFrame-utils.R DataFrameFactor-class.R TransposedDataFrame-class.R Pairs-class.R FilterRules-class.R stack-methods.R expand-methods.R aggregate-methods.R shiftApply-methods.R zzz.R",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/S4Vectors",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "c4f37f052d7c4ee8ff0d62a6adec355129258263",
       "NeedsCompilation": "yes",
       "Author": "Hervé Pagès [aut, cre], Michael Lawrence [aut], Patrick Aboyoun [aut], Aaron Lun [ctb], Beryl Kanali [ctb] (Converted vignettes from Sweave to RMarkdown)",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/S4Vectors",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "c4f37f052d7c4ee8ff0d62a6adec355129258263"
     },
     "S7": {
       "Package": "S7",
@@ -4084,12 +4135,13 @@
       "URL": "https://github.com/LTLA/ScaledMatrix",
       "Config/pak/sysreqs": "zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/ScaledMatrix",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "2bcf86d35795b95165e1e1532536daf01777a068",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cre, cph]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/ScaledMatrix",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "2bcf86d35795b95165e1e1532536daf01777a068"
     },
     "Seqinfo": {
       "Package": "Seqinfo",
@@ -4129,12 +4181,13 @@
       "VignetteBuilder": "knitr",
       "Collate": "utils.R rankSeqlevels.R seqinfo.R sortSeqlevels.R Seqinfo-class.R seqlevelsInUse.R GenomeDescription-class.R zzz.R",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/Seqinfo",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "9fc5a613b84efd096416b9810ed62ceef79522cb",
       "NeedsCompilation": "no",
       "Author": "Hervé Pagès [aut, cre] (ORCID: <https://orcid.org/0009-0002-8272-4522>)",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/Seqinfo",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "9fc5a613b84efd096416b9810ed62ceef79522cb"
     },
     "Seurat": {
       "Package": "Seurat",
@@ -4286,17 +4339,17 @@
         "Azimuth"
       ],
       "Encoding": "UTF-8",
+      "LazyData": "true",
       "RoxygenNote": "7.3.2",
       "Collate": "'zzz.R' 'seurat_data.R'",
+      "Author": "Rahul Satija [aut] (ORCID: <https://orcid.org/0000-0001-9448-8833>), Paul Hoffman [aut, cre] (ORCID: <https://orcid.org/0000-0002-7693-8957>), Andrew Butler [aut] (ORCID: <https://orcid.org/0000-0003-3608-0463>), Austin Hartman [ctb] (ORCID: <https://orcid.org/0000-0001-7278-1852>), Yuhan Hao [ctb] (ORCID: <https://orcid.org/0000-0002-1810-0822>), Gesmira Molla [ctb] (ORCID: <https://orcid.org/0000-0002-8628-5056>)",
+      "Maintainer": "Paul Hoffman <phoffman@nygenome.org>",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "seurat-data",
       "RemoteUsername": "satijalab",
       "RemoteRef": "HEAD",
-      "RemoteSha": "3e51f44303069b64f5dc4d68e6a3d4a343f55c39",
-      "NeedsCompilation": "no",
-      "Author": "Rahul Satija [aut] (ORCID: <https://orcid.org/0000-0001-9448-8833>), Paul Hoffman [aut, cre] (ORCID: <https://orcid.org/0000-0002-7693-8957>), Andrew Butler [aut] (ORCID: <https://orcid.org/0000-0003-3608-0463>), Austin Hartman [ctb] (ORCID: <https://orcid.org/0000-0001-7278-1852>), Yuhan Hao [ctb] (ORCID: <https://orcid.org/0000-0002-1810-0822>), Gesmira Molla [ctb] (ORCID: <https://orcid.org/0000-0002-8628-5056>)",
-      "Maintainer": "Paul Hoffman <phoffman@nygenome.org>"
+      "RemoteSha": "3e51f44303069b64f5dc4d68e6a3d4a343f55c39"
     },
     "SeuratDisk": {
       "Package": "SeuratDisk",
@@ -4311,8 +4364,8 @@
       "BugReports": "https://github.com/mojaveazure/seurat-disk/issues",
       "License": "GPL-3 | file LICENSE",
       "Encoding": "UTF-8",
+      "LazyData": "true",
       "RoxygenNote": "7.2.3",
-      "Remotes": "satijalab/seurat-data",
       "Depends": [
         "R (>= 3.6.0)"
       ],
@@ -4340,15 +4393,15 @@
         "SeuratData"
       ],
       "VignetteBuilder": "knitr",
+      "Author": "Paul Hoffman [aut, cre] (ORCID: <https://orcid.org/0000-0002-7693-8957>), Rahul Satija [ctb] (ORCID: <https://orcid.org/0000-0001-9448-8833>)",
+      "Maintainer": "Paul Hoffman <phoffman@nygenome.org>",
       "RemoteType": "github",
+      "Remotes": "satijalab/seurat-data",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "seurat-disk",
       "RemoteUsername": "mojaveazure",
       "RemoteRef": "HEAD",
-      "RemoteSha": "877d4e18ab38c686f5db54f8cd290274ccdbe295",
-      "NeedsCompilation": "no",
-      "Author": "Paul Hoffman [aut, cre] (ORCID: <https://orcid.org/0000-0002-7693-8957>), Rahul Satija [ctb] (ORCID: <https://orcid.org/0000-0001-9448-8833>)",
-      "Maintainer": "Paul Hoffman <phoffman@nygenome.org>"
+      "RemoteSha": "877d4e18ab38c686f5db54f8cd290274ccdbe295"
     },
     "SeuratObject": {
       "Package": "SeuratObject",
@@ -4545,15 +4598,14 @@
         "fgsea"
       ],
       "Roxygen": "list(markdown = TRUE)",
+      "Author": "Tim Stuart [aut, cre] (ORCID: <https://orcid.org/0000-0002-3044-0897>), Avi Srivastava [aut] (ORCID: <https://orcid.org/0000-0001-9798-2079>), Paul Hoffman [ctb] (ORCID: <https://orcid.org/0000-0002-7693-8957>), Rahul Satija [ctb] (ORCID: <https://orcid.org/0000-0001-9448-8833>)",
+      "Maintainer": "Tim Stuart <stuartt@a-star.edu.sg>",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "signac",
       "RemoteUsername": "stuart-lab",
       "RemoteRef": "develop",
-      "RemoteSha": "f90ec184c66af301e09b9b9ebf4c66702ecba83f",
-      "NeedsCompilation": "yes",
-      "Author": "Tim Stuart [aut, cre] (ORCID: <https://orcid.org/0000-0002-3044-0897>), Avi Srivastava [aut] (ORCID: <https://orcid.org/0000-0001-9798-2079>), Paul Hoffman [ctb] (ORCID: <https://orcid.org/0000-0002-7693-8957>), Rahul Satija [ctb] (ORCID: <https://orcid.org/0000-0001-9448-8833>)",
-      "Maintainer": "Tim Stuart <stuartt@a-star.edu.sg>"
+      "RemoteSha": "f90ec184c66af301e09b9b9ebf4c66702ecba83f"
     },
     "SingleCellExperiment": {
       "Package": "SingleCellExperiment",
@@ -4590,12 +4642,13 @@
       "RoxygenNote": "7.3.2",
       "Config/pak/sysreqs": "zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/SingleCellExperiment",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "db7133e208c7f6f086ca5a5d17f6b0e0ba9bc1e1",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cph], Davide Risso [aut, cre, cph], Keegan Korthauer [ctb], Kevin Rue-Albrecht [ctb], Luke Zappia [ctb] (ORCID: <https://orcid.org/0000-0001-7744-8565>, github: lazappi)",
-      "Maintainer": "Davide Risso <risso.davide@gmail.com>"
+      "Maintainer": "Davide Risso <risso.davide@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/SingleCellExperiment",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "db7133e208c7f6f086ca5a5d17f6b0e0ba9bc1e1"
     },
     "SingleR": {
       "Package": "SingleR",
@@ -4654,12 +4707,13 @@
       "BugReports": "https://github.com/SingleR-inc/SingleR/issues",
       "Config/pak/sysreqs": "zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/SingleR",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "39ca8d490be562462f4dfa9b7a159de0508c189c",
       "NeedsCompilation": "yes",
       "Author": "Dvir Aran [aut, cph], Aaron Lun [ctb, cre], Daniel Bunis [ctb], Jared Andrews [ctb], Friederike Dündar [ctb]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/SingleR",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "39ca8d490be562462f4dfa9b7a159de0508c189c"
     },
     "SparseArray": {
       "Package": "SparseArray",
@@ -4704,14 +4758,18 @@
       ],
       "VignetteBuilder": "knitr",
       "Collate": "utils.R options.R OPBufTree.R thread-control.R sparseMatrix-utils.R is_nonzero.R SparseArray-class.R COO_SparseArray-class.R SVT_SparseArray-class.R extract_sparse_array.R read_block_as_sparse.R SparseArray-dim-tuning.R SparseArray-aperm.R SparseArray-subsetting.R SparseArray-subassignment.R SparseArray-abind.R SparseArray-summarization.R SparseArray-Arith-methods.R SparseArray-Compare-methods.R SparseArray-Logic-methods.R SparseArray-Math-methods.R SparseArray-Complex-methods.R SparseArray-misc-methods.R SparseArray-matrixStats.R rowsum-methods.R SparseMatrix-mult.R randomSparseArray.R readSparseCSV.R is_nonna.R NaArray-class.R NaArray-aperm.R NaArray-subsetting.R NaArray-subassignment.R NaArray-abind.R NaArray-summarization.R NaArray-Arith-methods.R NaArray-Compare-methods.R NaArray-Logic-methods.R NaArray-Math-methods.R NaArray-misc-methods.R NaArray-matrixStats.R zzz.R",
-      "Config/pak/sysreqs": "zlib1g-dev",
-      "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/SparseArray",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "c0de8d4bbeaf98fafbdc897c893dd9345c54fc8d",
+      "git_url": "https://git.bioconductor.org/packages/SparseArray",
+      "git_branch": "RELEASE_3_22",
+      "git_last_commit": "c0de8d4",
+      "git_last_commit_date": "2025-12-15",
+      "Repository": "Bioconductor 3.22",
       "NeedsCompilation": "yes",
       "Author": "Hervé Pagès [aut, cre] (ORCID: <https://orcid.org/0009-0002-8272-4522>), Vince Carey [fnd] (ORCID: <https://orcid.org/0000-0003-4046-0063>), Rafael A. Irizarry [fnd] (ORCID: <https://orcid.org/0000-0002-3944-4309>), Jacques Serizay [ctb] (ORCID: <https://orcid.org/0000-0002-4295-0624>)",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/SparseArray",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "c0de8d4bbeaf98fafbdc897c893dd9345c54fc8d"
     },
     "SparseM": {
       "Package": "SparseM",
@@ -4780,12 +4838,13 @@
       "RoxygenNote": "7.3.1",
       "Config/pak/sysreqs": "libmagick++-dev gsfonts libicu-dev libssl-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/SpatialExperiment",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "dfdda19601f21d466d90d4bc096f6d74ab5c5ca1",
       "NeedsCompilation": "no",
       "Author": "Dario Righelli [aut, cre] (ORCID: <https://orcid.org/0000-0003-1504-3583>), Davide Risso [aut] (ORCID: <https://orcid.org/0000-0001-8508-5012>), Helena L. Crowell [aut] (ORCID: <https://orcid.org/0000-0002-4801-1767>), Lukas M. Weber [aut] (ORCID: <https://orcid.org/0000-0002-3282-1730>), Nicholas J. Eagles [ctb]",
-      "Maintainer": "Dario Righelli <dario.righelli@gmail.com>"
+      "Maintainer": "Dario Righelli <dario.righelli@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/SpatialExperiment",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "dfdda19601f21d466d90d4bc096f6d74ab5c5ca1"
     },
     "SummarizedExperiment": {
       "Package": "SummarizedExperiment",
@@ -4841,12 +4900,13 @@
       "Collate": "Assays-class.R SummarizedExperiment-class.R RangedSummarizedExperiment-class.R intra-range-methods.R inter-range-methods.R coverage-methods.R combine-methods.R findOverlaps-methods.R nearest-methods.R makeSummarizedExperimentFromExpressionSet.R makeSummarizedExperimentFromDataFrame.R makeSummarizedExperimentFromLoom.R zzz.R",
       "Config/pak/sysreqs": "zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/SummarizedExperiment",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "469a2deab30b904252870c5b569b353fe1a49227",
       "NeedsCompilation": "no",
       "Author": "Martin Morgan [aut], Valerie Obenchain [aut], Jim Hester [aut], Hervé Pagès [aut, cre]",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/SummarizedExperiment",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "469a2deab30b904252870c5b569b353fe1a49227"
     },
     "TENxBrainData": {
       "Package": "TENxBrainData",
@@ -5034,8 +5094,9 @@
       "NeedsCompilation": "no",
       "Author": "Zhicheng Ji [aut, cre], Hongkai Ji [aut], Aaron Lun [ctb]",
       "Maintainer": "Zhicheng Ji <zji4@jhu.edu>",
-      "Config/pak/sysreqs": "libglpk-dev make libxml2-dev zlib1g-dev",
+      "Config/pak/sysreqs": "cmake libglpk-dev make libuv1-dev libxml2-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/TSCAN",
       "RemoteRef": "RELEASE_3_22",
       "RemoteSha": "7f095e0a8d4ed0a203fac7254e62f1ad33d2ab23"
@@ -5077,12 +5138,13 @@
       "URL": "https://bioconductor.org/packages/TrajectoryUtils",
       "Config/pak/sysreqs": "libglpk-dev libxml2-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/TrajectoryUtils",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "4cf65d40f2463df87e260fc444bd330055e3790f",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cre], Kelly Street [aut]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/TrajectoryUtils",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "4cf65d40f2463df87e260fc444bd330055e3790f"
     },
     "UCSC.utils": {
       "Package": "UCSC.utils",
@@ -5116,12 +5178,13 @@
       "Collate": "00utils.R UCSC.api.url.R REST_API.R list_UCSC_genomes.R get_UCSC_chrom_sizes.R list_UCSC_tracks.R fetch_UCSC_track_data.R UCSC_dbselect.R zzz.R",
       "Config/pak/sysreqs": "libssl-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/UCSC.utils",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "625d5544d0de9cb47ea67364136efc1535c67682",
       "NeedsCompilation": "no",
       "Author": "Hervé Pagès [aut, cre]",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/UCSC.utils",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "625d5544d0de9cb47ea67364136efc1535c67682"
     },
     "V8": {
       "Package": "V8",
@@ -5226,12 +5289,13 @@
       "VignetteBuilder": "knitr",
       "Config/pak/sysreqs": "make libbz2-dev liblzma-dev libpng-dev libxml2-dev libssl-dev xz-utils zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/VariantAnnotation",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "dc8ecd11b893fdebfa561bca78205d909ce354a3",
       "NeedsCompilation": "yes",
       "Author": "Valerie Oberchain [aut], Martin Morgan [aut], Michael Lawrence [aut], Stephanie Gogarten [ctb], Bioconductor Package Maintainer [cre]",
-      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
+      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/VariantAnnotation",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "dc8ecd11b893fdebfa561bca78205d909ce354a3"
     },
     "XML": {
       "Package": "XML",
@@ -5298,10 +5362,11 @@
       ],
       "Collate": "io-utils.R RDS-random-access.R SharedVector-class.R SharedRaw-class.R SharedInteger-class.R SharedDouble-class.R XVector-class.R XRaw-class.R XInteger-class.R XDouble-class.R XVectorList-class.R XRawList-class.R XRawList-comparison.R XIntegerViews-class.R XDoubleViews-class.R OnDiskRaw-class.R RdaCollection-class.R RdsCollection-class.R intra-range-methods.R compact-methods.R reverse-methods.R slice-methods.R view-summarization-methods.R updateObject-methods.R zzz.R",
       "Repository": "https://bioc-release.r-universe.dev",
+      "NeedsCompilation": "yes",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/XVector",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "6b7e2a122e94cba4c8048da29b99f482533d3fec",
-      "NeedsCompilation": "yes"
+      "RemoteSha": "6b7e2a122e94cba4c8048da29b99f482533d3fec"
     },
     "abind": {
       "Package": "abind",
@@ -5366,12 +5431,13 @@
       "BugReports": "https://github.com/ArtifactDB/alabaster.base/issues",
       "Config/pak/sysreqs": "make libssl-dev libnode-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/alabaster.base",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "6b49bcc082deff6a55f511737c245969ab874d17",
       "NeedsCompilation": "yes",
       "Author": "Aaron Lun [aut, cre]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/alabaster.base",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "6b49bcc082deff6a55f511737c245969ab874d17"
     },
     "alabaster.matrix": {
       "Package": "alabaster.matrix",
@@ -5414,12 +5480,13 @@
       "biocViews": "DataImport, DataRepresentation",
       "Config/pak/sysreqs": "libssl-dev libnode-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/alabaster.matrix",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "8892772a6e313fbb59a6d3ceb72fd123038a7450",
       "NeedsCompilation": "yes",
       "Author": "Aaron Lun [aut, cre]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/alabaster.matrix",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "8892772a6e313fbb59a6d3ceb72fd123038a7450"
     },
     "alabaster.ranges": {
       "Package": "alabaster.ranges",
@@ -5453,12 +5520,13 @@
       "biocViews": "DataImport, DataRepresentation",
       "Config/pak/sysreqs": "libssl-dev libnode-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/alabaster.ranges",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "e35375b54f96f75712a8d569a983ce6c25764c51",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cre]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/alabaster.ranges",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "e35375b54f96f75712a8d569a983ce6c25764c51"
     },
     "alabaster.sce": {
       "Package": "alabaster.sce",
@@ -5489,12 +5557,13 @@
       "biocViews": "DataImport, DataRepresentation",
       "Config/pak/sysreqs": "libssl-dev libnode-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/alabaster.sce",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "a6eed096f48dd789d3a31e1b75146bc995195d23",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cre]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/alabaster.sce",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "a6eed096f48dd789d3a31e1b75146bc995195d23"
     },
     "alabaster.schemas": {
       "Package": "alabaster.schemas",
@@ -5514,12 +5583,13 @@
       ],
       "VignetteBuilder": "knitr",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/alabaster.schemas",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "f89d374fe7ccf446ac3679720225ff06d4ef8853",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [cre, aut]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/alabaster.schemas",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "f89d374fe7ccf446ac3679720225ff06d4ef8853"
     },
     "alabaster.se": {
       "Package": "alabaster.se",
@@ -5555,12 +5625,13 @@
       "biocViews": "DataImport, DataRepresentation",
       "Config/pak/sysreqs": "libssl-dev libnode-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/alabaster.se",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "9f5dc2090d035bb2179d26e7b8091a301e552cf9",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cre]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/alabaster.se",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "9f5dc2090d035bb2179d26e7b8091a301e552cf9"
     },
     "annotate": {
       "Package": "annotate",
@@ -5610,11 +5681,12 @@
       "biocViews": "Annotation, Pathways, GO",
       "Config/pak/sysreqs": "libpng-dev libxml2-dev libssl-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
+      "NeedsCompilation": "no",
+      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/annotate",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "bc0d5a07cf29902d84eb8b9594ff66103e484faf",
-      "NeedsCompilation": "no",
-      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
+      "RemoteSha": "bc0d5a07cf29902d84eb8b9594ff66103e484faf"
     },
     "apcluster": {
       "Package": "apcluster",
@@ -5719,12 +5791,13 @@
       "Encoding": "UTF-8",
       "biocViews": "SingleCell, QualityControl, Normalization, DataRepresentation, DataImport, DifferentialExpression, Alignment",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/assorthead",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "9255f2fcb46f6cf703efcc0fba311c7263008880",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [cre, aut]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/assorthead",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "9255f2fcb46f6cf703efcc0fba311c7263008880"
     },
     "babelgene": {
       "Package": "babelgene",
@@ -5836,12 +5909,13 @@
       "Encoding": "UTF-8",
       "Config/pak/sysreqs": "libpng-dev python3",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/basilisk",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "18be55f8facf3e96bb4c84fbf99eefb229275c87",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cre, cph], Vince Carey [ctb]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/basilisk",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "18be55f8facf3e96bb4c84fbf99eefb229275c87"
     },
     "batchelor": {
       "Package": "batchelor",
@@ -5896,11 +5970,12 @@
       "RoxygenNote": "7.3.2",
       "Config/pak/sysreqs": "libglpk-dev libxml2-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
+      "Author": "Aaron Lun [aut, cre], Laleh Haghverdi [ctb]",
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/batchelor",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "8a9df0dc7b5f0579adfd4ab1d1a529fac93f0a69",
-      "Author": "Aaron Lun [aut, cre], Laleh Haghverdi [ctb]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "RemoteSha": "8a9df0dc7b5f0579adfd4ab1d1a529fac93f0a69"
     },
     "beachmat": {
       "Package": "beachmat",
@@ -5943,11 +6018,12 @@
       "Encoding": "UTF-8",
       "Config/pak/sysreqs": "zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
+      "Author": "Aaron Lun [aut, cre], Hervé Pagès [aut], Mike Smith [aut]",
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/beachmat",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "016c55e81c04fa1c6e226d17c018d38fcbb340f6",
-      "Author": "Aaron Lun [aut, cre], Hervé Pagès [aut], Mike Smith [aut]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "RemoteSha": "016c55e81c04fa1c6e226d17c018d38fcbb340f6"
     },
     "beeswarm": {
       "Package": "beeswarm",
@@ -6103,12 +6179,13 @@
       "BugReports": "https://github.com/LTLA/biocmake/issues",
       "RoxygenNote": "7.3.2",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/biocmake",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "ee210d09a3d5d99606fcf6529a1b42527fd104e5",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [cre, aut]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/biocmake",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "ee210d09a3d5d99606fcf6529a1b42527fd104e5"
     },
     "biovizBase": {
       "Package": "biovizBase",
@@ -6158,14 +6235,15 @@
       "LazyData": "Yes",
       "Collate": "utils.R color.R AllGenerics.R crunch-method.R mold-method.R addStepping-method.R getFragLength-method.R shrinkageFun-method.R maxGap-method.R spliceSummary-method.R ideogram.R pileup.R coverage.R labs.R original.R transform.R facets-method.R aes.R scale.R zzz.R biovizBase-package.R",
       "biocViews": "Infrastructure, Visualization, Preprocessing",
-      "Config/pak/sysreqs": "make libbz2-dev libicu-dev liblzma-dev libpng-dev libxml2-dev libssl-dev xz-utils zlib1g-dev",
+      "Config/pak/sysreqs": "cmake make libbz2-dev libicu-dev liblzma-dev libpng-dev libuv1-dev libxml2-dev libssl-dev xz-utils zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/biovizBase",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "1f6087b211f1fb09560643f82d57dca5c7e79a69",
       "NeedsCompilation": "yes",
       "Author": "Tengfei Yin [aut], Michael Lawrence [aut, ths, cre], Dianne Cook [aut, ths], Johannes Rainer [ctb]",
-      "Maintainer": "Michael Lawrence <lawremi@gmail.com>"
+      "Maintainer": "Michael Lawrence <lawremi@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/biovizBase",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "1f6087b211f1fb09560643f82d57dca5c7e79a69"
     },
     "bit": {
       "Package": "bit",
@@ -6911,12 +6989,13 @@
       "Collate": "utils.R cigar_ops_visibility.R explode_cigars.R tabulate_cigar_ops.R cigar_extent.R trim_cigars.R cigars_as_ranges.R project_positions.R project_sequences.R map_ref_ranges_to_query.R",
       "Config/pak/sysreqs": "zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/cigarillo",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "8775adf6c85995de7c778f0a0b4311c9c6a82068",
       "NeedsCompilation": "yes",
       "Author": "Hervé Pagès [aut, cre] (ORCID: <https://orcid.org/0009-0002-8272-4522>), Valerie Obenchain [aut], Michael Lawrence [aut], Patrick Aboyoun [ctb], Fedor Bezrukov [ctb], Martin Morgan [ctb]",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/cigarillo",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "8775adf6c85995de7c778f0a0b4311c9c6a82068"
     },
     "circlize": {
       "Package": "circlize",
@@ -7478,12 +7557,13 @@
       "Encoding": "UTF-8",
       "Config/pak/sysreqs": "libicu-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/corral",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "0d657a1640ad7b5e8fe2c07b063293d49fe93edc",
       "NeedsCompilation": "no",
       "Author": "Lauren Hsu [aut, cre] (ORCID: <https://orcid.org/0000-0002-6035-7381>), Aedin Culhane [aut] (ORCID: <https://orcid.org/0000-0002-1395-9734>)",
-      "Maintainer": "Lauren Hsu <lrnshoe@gmail.com>"
+      "Maintainer": "Lauren Hsu <lrnshoe@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/corral",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "0d657a1640ad7b5e8fe2c07b063293d49fe93edc"
     },
     "cowplot": {
       "Package": "cowplot",
@@ -7933,12 +8013,13 @@
       "StagedInstall": "no",
       "Config/pak/sysreqs": "libpng-dev python3",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/densvis",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "aeec1b9db808041ffdd096b618e061f8fed98eb3",
       "NeedsCompilation": "yes",
       "Author": "Alan O'Callaghan [aut, cre], Ashwinn Narayan [aut], Hyunghoon Cho [aut]",
-      "Maintainer": "Alan O'Callaghan <alan.ocallaghan@outlook.com>"
+      "Maintainer": "Alan O'Callaghan <alan.ocallaghan@outlook.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/densvis",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "aeec1b9db808041ffdd096b618e061f8fed98eb3"
     },
     "desc": {
       "Package": "desc",
@@ -8155,12 +8236,13 @@
       "RoxygenNote": "7.3.2",
       "Encoding": "UTF-8",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/dir.expiry",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "6d768b34100713a2e1f24c88d1a87fbea2cad758",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cre]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/dir.expiry",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "6d768b34100713a2e1f24c88d1a87fbea2cad758"
     },
     "distributional": {
       "Package": "distributional",
@@ -8548,6 +8630,7 @@
       "biocViews": "AlternativeSplicing, BatchEffect, Bayesian, BiomedicalInformatics, CellBiology, ChIPSeq, Clustering, Coverage, DifferentialExpression, DifferentialMethylation, DifferentialSplicing, DNAMethylation, Epigenetics, FunctionalGenomics, GeneExpression, GeneSetEnrichment, Genetics, Genetics, ImmunoOncology, MultipleComparison, Normalization, Pathways, Proteomics, QualityControl, Regression, RNASeq, SAGE, Sequencing, SingleCell, SystemsBiology, TimeCourse, Transcription, Transcriptomics",
       "NeedsCompilation": "yes",
       "Repository": "https://bioc-release.r-universe.dev",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/edgeR",
       "RemoteRef": "RELEASE_3_22",
       "RemoteSha": "af0343acbb3998d2d2bb3e3d259bbee17a2c8a7e"
@@ -8654,10 +8737,11 @@
       "RoxygenNote": "7.3.2",
       "Config/pak/sysreqs": "make libbz2-dev liblzma-dev libpng-dev libxml2-dev libssl-dev xz-utils zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
+      "NeedsCompilation": "no",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/ensembldb",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "a13967bb64a7188cb2e54dff9c46df32a8884a6e",
-      "NeedsCompilation": "no"
+      "RemoteSha": "a13967bb64a7188cb2e54dff9c46df32a8884a6e"
     },
     "evaluate": {
       "Package": "evaluate",
@@ -10277,12 +10361,13 @@
       "RoxygenNote": "7.2.3",
       "VignetteBuilder": "knitr",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/graph",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "18346609f983e67db28095e729bf19d53a99bb33",
       "NeedsCompilation": "yes",
       "Author": "R Gentleman [aut], Elizabeth Whalen [aut], W Huber [aut], S Falcon [aut], Jeff Gentry [aut], Paul Shannon [aut], Halimat C. Atanda [ctb] (Converted 'MultiGraphClass' and 'GraphClass' vignettes from Sweave to RMarkdown / HTML.), Paul Villafuerte [ctb] (Converted vignettes from Sweave to RMarkdown / HTML.), Aliyu Atiku Mustapha [ctb] (Converted 'Graph' vignette from Sweave to RMarkdown / HTML.), Bioconductor Package Maintainer [cre]",
-      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>"
+      "Maintainer": "Bioconductor Package Maintainer <maintainer@bioconductor.org>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/graph",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "18346609f983e67db28095e729bf19d53a99bb33"
     },
     "graphlayouts": {
       "Package": "graphlayouts",
@@ -10367,8 +10452,7 @@
       "RemoteRepo": "grr",
       "RemoteUsername": "cvarrichio",
       "RemoteRef": "HEAD",
-      "RemoteSha": "956d2e026b201c8bbb52d628953cf35cff1678fa",
-      "NeedsCompilation": "yes"
+      "RemoteSha": "956d2e026b201c8bbb52d628953cf35cff1678fa"
     },
     "gtable": {
       "Package": "gtable",
@@ -10477,12 +10561,13 @@
       "biocViews": "DataImport",
       "Config/pak/sysreqs": "libssl-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/gypsum",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "ff6acdcb511e623b3a9e8da23bbbe77dbf2df824",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cre]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/gypsum",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "ff6acdcb511e623b3a9e8da23bbbe77dbf2df824"
     },
     "h5mread": {
       "Package": "h5mread",
@@ -10530,12 +10615,13 @@
       "Collate": "utils.R h5dim.R H5File-class.R h5ls.R H5DSetDescriptor-class.R uaselection.R h5mread.R h5summarize.R h5mread_from_reshaped.R h5dimscales.R h5writeDimnames.R zzz.R",
       "Config/pak/sysreqs": "make libssl-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/h5mread",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "b3770761af5669f989d4a6f6ab365b8f69c3740b",
       "NeedsCompilation": "yes",
       "Author": "Hervé Pagès [aut, cre] (ORCID: <https://orcid.org/0009-0002-8272-4522>)",
-      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>"
+      "Maintainer": "Hervé Pagès <hpages.on.github@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/h5mread",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "b3770761af5669f989d4a6f6ab365b8f69c3740b"
     },
     "harmony": {
       "Package": "harmony",
@@ -10583,15 +10669,14 @@
         "data.table"
       ],
       "VignetteBuilder": "knitr",
+      "Author": "Ilya Korsunsky [cre, aut] (ORCID: <https://orcid.org/0000-0003-4848-3948>), Martin Hemberg [aut] (ORCID: <https://orcid.org/0000-0001-8895-5239>), Nikolaos Patikas [aut, ctb] (ORCID: <https://orcid.org/0000-0002-3978-0134>), Hongcheng Yao [aut, ctb] (ORCID: <https://orcid.org/0000-0002-0743-4835>), Nghia Millard [aut] (ORCID: <https://orcid.org/0000-0002-0518-7674>), Jean Fan [aut, ctb] (ORCID: <https://orcid.org/0000-0002-0212-5451>), Kamil Slowikowski [aut, ctb] (ORCID: <https://orcid.org/0000-0002-2843-6370>), Miles Smith [ctb], Soumya Raychaudhuri [aut] (ORCID: <https://orcid.org/0000-0002-1901-8265>)",
+      "Maintainer": "Ilya Korsunsky <ilya.korsunsky@gmail.com>",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "harmony",
       "RemoteUsername": "immunogenomics",
       "RemoteRef": "HEAD",
-      "RemoteSha": "200114cfad09bee95543b478b3642c133d59159c",
-      "NeedsCompilation": "yes",
-      "Author": "Ilya Korsunsky [cre, aut] (ORCID: <https://orcid.org/0000-0003-4848-3948>), Martin Hemberg [aut] (ORCID: <https://orcid.org/0000-0001-8895-5239>), Nikolaos Patikas [aut, ctb] (ORCID: <https://orcid.org/0000-0002-3978-0134>), Hongcheng Yao [aut, ctb] (ORCID: <https://orcid.org/0000-0002-0743-4835>), Nghia Millard [aut] (ORCID: <https://orcid.org/0000-0002-0518-7674>), Jean Fan [aut, ctb] (ORCID: <https://orcid.org/0000-0002-0212-5451>), Kamil Slowikowski [aut, ctb] (ORCID: <https://orcid.org/0000-0002-2843-6370>), Miles Smith [ctb], Soumya Raychaudhuri [aut] (ORCID: <https://orcid.org/0000-0002-1901-8265>)",
-      "Maintainer": "Ilya Korsunsky <ilya.korsunsky@gmail.com>"
+      "RemoteSha": "200114cfad09bee95543b478b3642c133d59159c"
     },
     "haven": {
       "Package": "haven",
@@ -11145,14 +11230,15 @@
       "VignetteBuilder": "knitr",
       "Encoding": "UTF-8",
       "RoxygenNote": "7.3.2",
-      "Config/pak/sysreqs": "libglpk-dev make libpng-dev libxml2-dev perl zlib1g-dev",
+      "Config/pak/sysreqs": "cmake libglpk-dev make libpng-dev libuv1-dev libxml2-dev perl zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/iSEE",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "3931647bad35b00ece5fd632ae952693de82bede",
       "NeedsCompilation": "no",
       "Author": "Kevin Rue-Albrecht [aut, cre] (ORCID: <https://orcid.org/0000-0003-3899-3872>), Federico Marini [aut] (ORCID: <https://orcid.org/0000-0003-3252-7758>), Charlotte Soneson [aut] (ORCID: <https://orcid.org/0000-0003-3833-2169>), Aaron Lun [aut] (ORCID: <https://orcid.org/0000-0002-3564-4813>)",
-      "Maintainer": "Kevin Rue-Albrecht <kevinrue67@gmail.com>"
+      "Maintainer": "Kevin Rue-Albrecht <kevinrue67@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/iSEE",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "3931647bad35b00ece5fd632ae952693de82bede"
     },
     "ica": {
       "Package": "ica",
@@ -11826,10 +11912,11 @@
       "URL": "https://bioinf.wehi.edu.au/limma/",
       "biocViews": "ExonArray, GeneExpression, Transcription, AlternativeSplicing, DifferentialExpression, DifferentialSplicing, GeneSetEnrichment, DataImport, Bayesian, Clustering, Regression, TimeCourse, Microarray, MicroRNAArray, mRNAMicroarray, OneChannel, ProprietaryPlatforms, TwoChannel, Sequencing, RNASeq, BatchEffect, MultipleComparison, Normalization, Preprocessing, QualityControl, BiomedicalInformatics, CellBiology, Cheminformatics, Epigenetics, FunctionalGenomics, Genetics, ImmunoOncology, Metabolomics, Proteomics, SystemsBiology, Transcriptomics",
       "Repository": "https://bioc-release.r-universe.dev",
+      "NeedsCompilation": "yes",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/limma",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "1c4b97114f1fd662b4a4b609cba4ebab72654822",
-      "NeedsCompilation": "yes"
+      "RemoteSha": "1c4b97114f1fd662b4a4b609cba4ebab72654822"
     },
     "listenv": {
       "Package": "listenv",
@@ -12281,6 +12368,7 @@
       ],
       "License": "MIT + file LICENSE",
       "Encoding": "UTF-8",
+      "LazyData": "true",
       "RoxygenNote": "7.1.1",
       "LinkingTo": [
         "Rcpp",
@@ -12293,15 +12381,14 @@
       "VignetteBuilder": "knitr",
       "biocViews": "Clustering, GeneExpression, RNASeq, Software, Transcriptomics, Sequencing, SingleCell",
       "BugReports": "https://github.com/drisso/mbkmeans/issues",
+      "Author": "Yuwei Ni [aut, cph], Davide Risso [aut, cre, cph], Stephanie Hicks [aut, cph], Elizabeth Purdom [aut, cph]",
+      "Maintainer": "Davide Risso <risso.davide@gmail.com>",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "mbkmeans",
       "RemoteUsername": "drisso",
       "RemoteRef": "HEAD",
-      "RemoteSha": "4af827b2d3ca88652ed59f366c7b003c409ebda2",
-      "NeedsCompilation": "yes",
-      "Author": "Yuwei Ni [aut, cph], Davide Risso [aut, cre, cph], Stephanie Hicks [aut, cph], Elizabeth Purdom [aut, cph]",
-      "Maintainer": "Davide Risso <risso.davide@gmail.com>"
+      "RemoteSha": "4af827b2d3ca88652ed59f366c7b003c409ebda2"
     },
     "mclust": {
       "Package": "mclust",
@@ -12424,11 +12511,12 @@
       "VignetteBuilder": "knitr",
       "RoxygenNote": "7.1.1",
       "Repository": "https://bioc-release.r-universe.dev",
+      "Author": "Aaron Lun [aut, cre]",
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/metapod",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "6552a64cd51a5b6abf7cd199fbcea69e2a9c5b2d",
-      "Author": "Aaron Lun [aut, cre]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "RemoteSha": "6552a64cd51a5b6abf7cd199fbcea69e2a9c5b2d"
     },
     "mgcv": {
       "Package": "mgcv",
@@ -12624,6 +12712,7 @@
       "biocViews": "Software, SingleCell, RNASeq, ATACSeq, Normalization, Preprocessing, DimensionReduction, Visualization, QualityControl, Clustering, Classification, Annotation, GeneExpression, DifferentialExpression",
       "License": "MIT + file LICENSE",
       "Encoding": "UTF-8",
+      "LazyData": "false",
       "Roxygen": "list(markdown = TRUE)",
       "RoxygenNote": "7.3.2",
       "LinkingTo": [
@@ -12702,18 +12791,18 @@
         "spelling",
         "testthat (>= 2.1.0)"
       ],
-      "Remotes": "github::bnprks/BPCells/r, github::cole-trapnell-lab/speedglm",
       "VignetteBuilder": "knitr",
       "Language": "en-US",
       "NeedsCompilation": "yes",
       "Maintainer": "Brent Ewing <bge@uw.edu>",
+      "Author": "Hannah Pliner [aut], Xiaojie Qiu [aut], Cole Trapnell [aut], Brent Ewing [cre]",
       "RemoteType": "github",
+      "Remotes": "github::bnprks/BPCells/r, github::cole-trapnell-lab/speedglm",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "monocle3",
       "RemoteUsername": "cole-trapnell-lab",
       "RemoteRef": "HEAD",
-      "RemoteSha": "4f4239a0afb0dd1941a0359ba6bec95eb0ccf628",
-      "Author": "Hannah Pliner [aut], Xiaojie Qiu [aut], Cole Trapnell [aut], Brent Ewing [cre]"
+      "RemoteSha": "4f4239a0afb0dd1941a0359ba6bec95eb0ccf628"
     },
     "msigdbr": {
       "Package": "msigdbr",
@@ -12829,10 +12918,11 @@
       "LazyLoad": "yes",
       "biocViews": "Microarray, DifferentialExpression, MultipleComparison",
       "Repository": "https://bioc-release.r-universe.dev",
+      "NeedsCompilation": "yes",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/multtest",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "2722ca27696f8a39a493a460b5c535cb65a6dd78",
-      "NeedsCompilation": "yes"
+      "RemoteSha": "2722ca27696f8a39a493a460b5c535cb65a6dd78"
     },
     "mumosa": {
       "Package": "mumosa",
@@ -12888,12 +12978,13 @@
       "BugReports": "https://support.bioconductor.org/",
       "Config/pak/sysreqs": "libglpk-dev libxml2-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/mumosa",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "18e57eb3d1b7f001f87c265f8674a700b8e1e428",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cre]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/mumosa",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "18e57eb3d1b7f001f87c265f8674a700b8e1e428"
     },
     "mutoss": {
       "Package": "mutoss",
@@ -13803,7 +13894,8 @@
       "SystemRequirements": "libpng",
       "URL": "http://www.rforge.net/png/",
       "NeedsCompilation": "yes",
-      "Repository": "CRAN"
+      "Repository": "RSPM",
+      "Encoding": "UTF-8"
     },
     "polyclip": {
       "Package": "polyclip",
@@ -13890,14 +13982,14 @@
       ],
       "NeedsCompilation": "yes",
       "VignetteBuilder": "knitr",
+      "Author": "Ilya Korsunsky [aut] (ORCID: <https://orcid.org/0000-0003-4848-3948>), Aparna Nathan [aut], Nghia Millard [aut] (ORCID: <https://orcid.org/0000-0002-0518-7674>), Soumya Raychaudhuri [aut] (ORCID: <https://orcid.org/0000-0002-1901-8265>), Kamil Slowikowski [cre, ctb] (ORCID: <https://orcid.org/0000-0002-2843-6370>), Austin Hartman [ctb] (ORCID: <https://orcid.org/0000-0001-7278-1852>)",
+      "Maintainer": "Kamil Slowikowski <kslowikowski@gmail.com>",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "presto",
       "RemoteUsername": "immunogenomics",
       "RemoteRef": "HEAD",
-      "RemoteSha": "7636b3d0465c468c35853f82f1717d3a64b3c8f6",
-      "Author": "Ilya Korsunsky [aut] (ORCID: <https://orcid.org/0000-0003-4848-3948>), Aparna Nathan [aut], Nghia Millard [aut] (ORCID: <https://orcid.org/0000-0002-0518-7674>), Soumya Raychaudhuri [aut] (ORCID: <https://orcid.org/0000-0002-1901-8265>), Kamil Slowikowski [cre, ctb] (ORCID: <https://orcid.org/0000-0002-2843-6370>), Austin Hartman [ctb] (ORCID: <https://orcid.org/0000-0001-7278-1852>)",
-      "Maintainer": "Kamil Slowikowski <kslowikowski@gmail.com>"
+      "RemoteSha": "7636b3d0465c468c35853f82f1717d3a64b3c8f6"
     },
     "prettyunits": {
       "Package": "prettyunits",
@@ -14738,14 +14830,15 @@
       "VignetteBuilder": "knitr",
       "biocViews": "Software, Infrastructure, ReportWriting",
       "RoxygenNote": "7.2.3",
-      "Config/pak/sysreqs": "make libxml2-dev",
+      "Config/pak/sysreqs": "cmake make libuv1-dev libxml2-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/rebook",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "0301643bd811de63d5f1c4ca33a3719464fbc9ef",
       "NeedsCompilation": "no",
       "Author": "Aaron Lun [aut, cre, cph]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/rebook",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "0301643bd811de63d5f1c4ca33a3719464fbc9ef"
     },
     "reformulas": {
       "Package": "reformulas",
@@ -15135,12 +15228,13 @@
       "RoxygenNote": "7.3.3",
       "Config/pak/sysreqs": "make zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/rhdf5",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "7f691e436af2edc5013a6036a4f863362372a363",
       "NeedsCompilation": "yes",
       "Author": "Bernd Fischer [aut], Mike Smith [aut] (ORCID: <https://orcid.org/0000-0002-7800-3848>, Maintainer from 2017 to 2025), Gregoire Pau [aut], Martin Morgan [ctb], Daniel van Twisk [ctb], Hugo Gruson [cre] (ORCID: <https://orcid.org/0000-0002-4094-1476>)",
-      "Maintainer": "Hugo Gruson <hugo.gruson@embl.de>"
+      "Maintainer": "Hugo Gruson <hugo.gruson@embl.de>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/rhdf5",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "7f691e436af2edc5013a6036a4f863362372a363"
     },
     "rhdf5filters": {
       "Package": "rhdf5filters",
@@ -15171,12 +15265,13 @@
       "biocViews": "Infrastructure, DataImport",
       "Config/pak/sysreqs": "make zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/rhdf5filters",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "3465c24d83840c70aff3e82f4517461dec2c03ac",
       "NeedsCompilation": "yes",
       "Author": "Mike Smith [aut, ccp] (ORCID: <https://orcid.org/0000-0002-7800-3848>), Hugo Gruson [cre] (ORCID: <https://orcid.org/0000-0002-4094-1476>)",
-      "Maintainer": "Hugo Gruson <hugo.gruson@embl.de>"
+      "Maintainer": "Hugo Gruson <hugo.gruson@embl.de>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/rhdf5filters",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "3465c24d83840c70aff3e82f4517461dec2c03ac"
     },
     "rintrojs": {
       "Package": "rintrojs",
@@ -15673,10 +15768,11 @@
       "biocViews": "Annotation,Visualization,DataImport",
       "Config/pak/sysreqs": "make libbz2-dev liblzma-dev libxml2-dev libssl-dev xz-utils zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
+      "NeedsCompilation": "yes",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/rtracklayer",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "873c7111e8befb0e5761618280100a4de0cc5f3e",
-      "NeedsCompilation": "yes"
+      "RemoteSha": "873c7111e8befb0e5761618280100a4de0cc5f3e"
     },
     "rversions": {
       "Package": "rversions",
@@ -15879,7 +15975,7 @@
       "Authors@R": "c( person(\"Pierre-Luc\", \"Germain\", email=\"pierre-luc.germain@hest.ethz.ch\", role=c(\"cre\",\"aut\"), comment=c(ORCID=\"0000-0003-3418-4218\")), person(\"Aaron\", \"Lun\", email=\"infinite.monkeys.with.keyboards@gmail.com\", role=\"ctb\"))",
       "URL": "https://github.com/plger/scDblFinder, https://plger.github.io/scDblFinder/",
       "BugReports": "https://github.com/plger/scDblFinder/issues",
-      "Description": "The scDblFinder package gathers various methods for the detection and handling of doublets/multiplets in single-cell sequencing data (i.e. multiple cells captured within the same droplet or reaction volume). It includes methods formerly found in the scran package, the new fast and comprehensive scDblFinder method, and a reimplementation of the Amulet detection method for single-cell ATAC-seq.",
+      "Description": "The scDblFinder package gathers various methods for the detection and  handling of doublets/multiplets in single-cell sequencing data (i.e.  multiple cells captured within the same droplet or reaction volume). It includes methods formerly found in the scran package, the new fast and comprehensive scDblFinder method, and a reimplementation of the Amulet detection method for single-cell ATAC-seq.",
       "License": "GPL-3 + file LICENSE",
       "Depends": [
         "R (>= 4.0)",
@@ -15927,14 +16023,18 @@
       "Encoding": "UTF-8",
       "RoxygenNote": "7.3.2",
       "biocViews": "Preprocessing, SingleCell, RNASeq, ATACSeq",
-      "Config/pak/sysreqs": "libcairo2-dev libfontconfig1-dev libfreetype6-dev libfribidi-dev libglpk-dev make libharfbuzz-dev libbz2-dev libicu-dev libjpeg-dev liblzma-dev libpng-dev libtiff-dev libwebp-dev libxml2-dev libssl-dev xz-utils zlib1g-dev",
-      "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/scDblFinder",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "0336756c4d3e40fddba9745c8e466c1a5eb9c50d",
+      "git_url": "https://git.bioconductor.org/packages/scDblFinder",
+      "git_branch": "RELEASE_3_22",
+      "git_last_commit": "0336756",
+      "git_last_commit_date": "2025-10-29",
+      "Repository": "Bioconductor 3.22",
       "NeedsCompilation": "no",
       "Author": "Pierre-Luc Germain [cre, aut] (ORCID: <https://orcid.org/0000-0003-3418-4218>), Aaron Lun [ctb]",
-      "Maintainer": "Pierre-Luc Germain <pierre-luc.germain@hest.ethz.ch>"
+      "Maintainer": "Pierre-Luc Germain <pierre-luc.germain@hest.ethz.ch>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/scDblFinder",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "0336756c4d3e40fddba9745c8e466c1a5eb9c50d"
     },
     "scPCA": {
       "Package": "scPCA",
@@ -15994,12 +16094,13 @@
       "biocViews": "PrincipalComponent, GeneExpression, DifferentialExpression, Sequencing, Microarray, RNASeq",
       "Config/pak/sysreqs": "libicu-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/scPCA",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "49d6aeb21a2f3efd755ddf51399ab910bd803363",
       "NeedsCompilation": "no",
       "Author": "Philippe Boileau [aut, cre, cph] (ORCID: <https://orcid.org/0000-0002-4850-2507>), Nima Hejazi [aut] (ORCID: <https://orcid.org/0000-0002-7127-2789>), Sandrine Dudoit [ctb, ths] (ORCID: <https://orcid.org/0000-0002-6069-8629>)",
-      "Maintainer": "Philippe Boileau <philippe_boileau@berkeley.edu>"
+      "Maintainer": "Philippe Boileau <philippe_boileau@berkeley.edu>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/scPCA",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "49d6aeb21a2f3efd755ddf51399ab910bd803363"
     },
     "scRNAseq": {
       "Package": "scRNAseq",
@@ -16164,14 +16265,18 @@
       "RoxygenNote": "7.3.2",
       "URL": "http://bioconductor.org/packages/scater/",
       "BugReports": "https://support.bioconductor.org/",
-      "Config/pak/sysreqs": "libcairo2-dev libfontconfig1-dev libfreetype6-dev libfribidi-dev libharfbuzz-dev libicu-dev libjpeg-dev libpng-dev libtiff-dev libwebp-dev zlib1g-dev",
-      "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/scater",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "64e2b5e064c5b27994a75016284e2e5cfaf36b49",
+      "git_url": "https://git.bioconductor.org/packages/scater",
+      "git_branch": "RELEASE_3_22",
+      "git_last_commit": "64e2b5e",
+      "git_last_commit_date": "2025-10-29",
+      "Repository": "Bioconductor 3.22",
       "NeedsCompilation": "no",
       "Author": "Davis McCarthy [aut], Kieran Campbell [aut], Aaron Lun [aut, ctb], Quin Wills [aut], Vladimir Kiselev [ctb], Felix G.M. Ernst [ctb], Alan O'Callaghan [ctb, cre], Yun Peng [ctb], Leo Lahti [ctb] (ORCID: <https://orcid.org/0000-0001-5537-637X>), Tuomas Borman [ctb] (ORCID: <https://orcid.org/0000-0002-8563-8884>)",
-      "Maintainer": "Alan O'Callaghan <alan.ocallaghan@outlook.com>"
+      "Maintainer": "Alan O'Callaghan <alan.ocallaghan@outlook.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/scater",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "64e2b5e064c5b27994a75016284e2e5cfaf36b49"
     },
     "scattermore": {
       "Package": "scattermore",
@@ -16267,13 +16372,17 @@
       "RoxygenNote": "7.3.2",
       "URL": "https://github.com/MarioniLab/scran/",
       "BugReports": "https://github.com/MarioniLab/scran/issues",
-      "Config/pak/sysreqs": "libglpk-dev libxml2-dev zlib1g-dev",
-      "Repository": "https://bioc-release.r-universe.dev",
+      "git_url": "https://git.bioconductor.org/packages/scran",
+      "git_branch": "RELEASE_3_22",
+      "git_last_commit": "50cb1ba",
+      "git_last_commit_date": "2025-10-29",
+      "Repository": "Bioconductor 3.22",
+      "Author": "Aaron Lun [aut, cre], Karsten Bach [aut], Jong Kyoung Kim [ctb], Antonio Scialdone [ctb]",
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/scran",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "50cb1ba553f2714c87a13056a78dae9ecc35adaa",
-      "Author": "Aaron Lun [aut, cre], Karsten Bach [aut], Jong Kyoung Kim [ctb], Antonio Scialdone [ctb]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "RemoteSha": "50cb1ba553f2714c87a13056a78dae9ecc35adaa"
     },
     "scrapper": {
       "Package": "scrapper",
@@ -16320,12 +16429,13 @@
       "RoxygenNote": "7.3.3",
       "Config/pak/sysreqs": "make zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/scrapper",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "4de467abd99d35558daef6241b676d279027d242",
       "NeedsCompilation": "yes",
       "Author": "Aaron Lun [cre, aut]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/scrapper",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "4de467abd99d35558daef6241b676d279027d242"
     },
     "sctransform": {
       "Package": "sctransform",
@@ -16430,11 +16540,12 @@
       "NeedsCompilation": "yes",
       "Config/pak/sysreqs": "zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
+      "Author": "Aaron Lun [aut, cre], Davis McCarthy [aut]",
+      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>",
+      "RemoteType": "bioconductor",
       "RemoteUrl": "https://github.com/bioc/scuttle",
       "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "2796dbd1727f965381c7b4cbaf480ec4dc567b8c",
-      "Author": "Aaron Lun [aut, cre], Davis McCarthy [aut]",
-      "Maintainer": "Aaron Lun <infinite.monkeys.with.keyboards@gmail.com>"
+      "RemoteSha": "2796dbd1727f965381c7b4cbaf480ec4dc567b8c"
     },
     "segmented": {
       "Package": "segmented",
@@ -16972,12 +17083,13 @@
       "BugReports": "https://github.com/kstreet13/slingshot/issues",
       "Config/pak/sysreqs": "libglpk-dev libxml2-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/slingshot",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "1c825f7a5eb8f9f9f4d1925fa920c5c67ea440b8",
       "NeedsCompilation": "no",
       "Author": "Kelly Street [aut, cre, cph], Davide Risso [aut], Diya Das [aut], Sandrine Dudoit [ths], Koen Van den Berge [ctb], Robrecht Cannoodt [ctb] (ORCID: <https://orcid.org/0000-0003-3641-729X>, github: rcannood)",
-      "Maintainer": "Kelly Street <street.kelly@gmail.com>"
+      "Maintainer": "Kelly Street <street.kelly@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/slingshot",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "1c825f7a5eb8f9f9f4d1925fa920c5c67ea440b8"
     },
     "sn": {
       "Package": "sn",
@@ -17047,12 +17159,13 @@
       "Config/testthat/edition": "3",
       "Config/pak/sysreqs": "libpng-dev python3",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/snifter",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "38ed1de3a9722a6accd12faa0cef7029773f09a6",
       "NeedsCompilation": "no",
       "Author": "Alan O'Callaghan [aut, cre], Aaron Lun [aut]",
-      "Maintainer": "Alan O'Callaghan <alan.ocallaghan@outlook.com>"
+      "Maintainer": "Alan O'Callaghan <alan.ocallaghan@outlook.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/snifter",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "38ed1de3a9722a6accd12faa0cef7029773f09a6"
     },
     "snow": {
       "Package": "snow",
@@ -17248,12 +17361,13 @@
       "BugReports": "https://github.com/const-ae/sparseMatrixStats/issues",
       "biocViews": "Infrastructure, Software, DataRepresentation",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/sparseMatrixStats",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "3acf348cf98ee7a25f322b8c63712a2a9a02a580",
       "NeedsCompilation": "yes",
       "Author": "Constantin Ahlmann-Eltze [aut, cre] (ORCID: <https://orcid.org/0000-0002-3762-068X>)",
-      "Maintainer": "Constantin Ahlmann-Eltze <artjom31415@googlemail.com>"
+      "Maintainer": "Constantin Ahlmann-Eltze <artjom31415@googlemail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/sparseMatrixStats",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "3acf348cf98ee7a25f322b8c63712a2a9a02a580"
     },
     "sparsepca": {
       "Package": "sparsepca",
@@ -18329,12 +18443,13 @@
       "BugReports": "https://github.com/statOmics/tradeSeq/issues",
       "Config/pak/sysreqs": "libglpk-dev libxml2-dev zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/tradeSeq",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "7eea99e915958402e5e9f71b3015d43fe52e20e8",
       "NeedsCompilation": "no",
       "Author": "Koen Van den Berge [aut], Hector Roux de Bezieux [aut, cre] (ORCID: <https://orcid.org/0000-0002-1489-8339>), Kelly Street [aut, ctb], Lieven Clement [aut, ctb], Sandrine Dudoit [ctb]",
-      "Maintainer": "Hector Roux de Bezieux <hector.rouxdebezieux@berkeley.edu>"
+      "Maintainer": "Hector Roux de Bezieux <hector.rouxdebezieux@berkeley.edu>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/tradeSeq",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "7eea99e915958402e5e9f71b3015d43fe52e20e8"
     },
     "transport": {
       "Package": "transport",
@@ -18771,12 +18886,13 @@
       "VignetteBuilder": "knitr",
       "Config/pak/sysreqs": "libpng-dev python3 zlib1g-dev",
       "Repository": "https://bioc-release.r-universe.dev",
-      "RemoteUrl": "https://github.com/bioc/velociraptor",
-      "RemoteRef": "RELEASE_3_22",
-      "RemoteSha": "67b4a9ec4afba690f124e8d25015b9a02ca79e1a",
       "NeedsCompilation": "no",
       "Author": "Kevin Rue-Albrecht [aut, cre] (ORCID: <https://orcid.org/0000-0003-3899-3872>), Aaron Lun [aut] (ORCID: <https://orcid.org/0000-0002-3564-4813>), Charlotte Soneson [aut] (ORCID: <https://orcid.org/0000-0003-3833-2169>), Michael Stadler [aut] (ORCID: <https://orcid.org/0000-0002-2269-4934>)",
-      "Maintainer": "Kevin Rue-Albrecht <kevinrue67@gmail.com>"
+      "Maintainer": "Kevin Rue-Albrecht <kevinrue67@gmail.com>",
+      "RemoteType": "bioconductor",
+      "RemoteUrl": "https://github.com/bioc/velociraptor",
+      "RemoteRef": "RELEASE_3_22",
+      "RemoteSha": "67b4a9ec4afba690f124e8d25015b9a02ca79e1a"
     },
     "vipor": {
       "Package": "vipor",

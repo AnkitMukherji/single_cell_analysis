@@ -1464,6 +1464,8 @@ plotExpression(sce.416b, features=rownames(ordered)[1:6],
     - Labels can be assigned to each cell in our uncharacterized dataset based on the most similar reference sample (using ml methods like random forests and support vector machines).
     - **SingleR** method assigns labels to cells based on the reference samples with the highest Spearman rank correlations, using only the marker genes between pairs of labels to focus on the relevant differences between cell types. It also performs a fine-tuning step for each cell where the correlations are recomputed with just the marker genes for the top-scoring labels.
     - Analysis is restricted by the diversity and resolution of the available labels which is overcome by de novo identification of clusters.
+- **Assigning cell labels from gene sets:**
+  - Uses explicitly identifiable sets of marker genes that are highly expressed in each individual cell
 
 ```{r, eval=FALSE}
 # Assigning cell labels from reference data---------------------------------------------------------------------------------------------
@@ -1499,6 +1501,7 @@ pheatmap(log2(tab+10), color=colorRampPalette(c("white", "blue"))(101))
 
 ## Using custom references
 # Using datasets that were manually annotated previously to annotate a new dataset in an automated manner
+# Using sce.muraro dataset as our reference
 sce.muraro <- readRDS("OSCA_datasets/OSCA_Basics/sce.muraro_processed.rds")
 
 # Pruning out unknown or unclear labels.
@@ -1506,7 +1509,38 @@ sce.muraro <- sce.muraro[,!is.na(sce.muraro$label) &
     sce.muraro$label!="unclear"]
 table(sce.muraro$label)
 
-# Assigning labels to our test dataset from Segerstolpe
+# Assigning labels to our test dataset (Segerstolpe)
+sce.seger <- readRDS("OSCA_datasets/OSCA_Basics/sce.seger_processed.rds")
+
+library(ensembldb)
+hs.db <- EnsDb("OSCA_datasets/OSCA_Workflows/EnsDb_Hsapiens_v97.sqlite")
+# Converting to FPKM for a more like-for-like comparison to UMI counts.
+# However, results are often still good even when this step is skipped.
+hs.exons <- exonsBy(hs.db, by="gene")
+hs.exons <- GenomicRanges::reduce(hs.exons)
+hs.len <- sum(width(hs.exons))
+
+library(scuttle)
+available <- intersect(rownames(sce.seger), names(hs.len))
+fpkm.seger <- calculateFPKM(sce.seger[available,], hs.len[available])
+
+pred.seger <- SingleR(test=fpkm.seger, ref=sce.muraro, 
+    labels=sce.muraro$label, de.method="wilcox")
+table(pred.seger$labels)
+
+# As our test dataset also contains independently defined labels, we see a strong consistency between the two sets of labels, indicating that our automatic annotation is comparable to that generated manually by domain experts
+tab <- table(pred.seger$pruned.labels, sce.seger$CellType)
+
+# Heatmap of the confusion matrix between the predicted labels (rows) and the independently defined labels (columns) in the Segerstolpe dataset. The color is proportinal to the log-transformed number of cells with a given combination of labels from each set.
+library(pheatmap)
+pheatmap(log2(tab+10), color=colorRampPalette(c("white", "blue"))(101))
+
+# Given a single-cell reference dataset, is it better to use it directly or convert it to pseudo-bulk values?
+# A single-cell reference preserves the “shape” of the subpopulation in high-dimensional expression space, potentially yielding more accurate predictions when the differences between labels are subtle.
+# However, it also requires more computational work to assign each cell in the test dataset.
+
+## Assigning cell labels from gene sets------------------------------------------------------------------------------
+
 ```
 
 # OSCA Workflows
@@ -1690,7 +1724,13 @@ saveRDS(sce.416b, "OSCA_datasets/OSCA_Basics/sce.416b_processed.rds")
 - Individual cells were isolated using the microfluidics system and library preparation was performed on each cell using a UMI-based protocol. After sequencing, expression was quantified by counting the number of unique molecular identifiers (UMIs) mapped to each gene.
 
 ```{r}
-To be continued.............
+library(scRNAseq)
+# sce.zeisel <- ZeiselBrainData()
+sce.zeisel <- readRDS("OSCA_datasets/OSCA_Basics/sce.zeisel.rds")
+
+library(scater)
+sce.zeisel <- aggregateAcrossFeatures(sce.zeisel, 
+    id=sub("_loc[0-9]+$", "", rownames(sce.zeisel)))
 ```
 
 ## Unfiltered human PBMC (10X Genomics)

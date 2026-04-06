@@ -1498,7 +1498,15 @@ library(pheatmap)
 pheatmap(log2(tab+10), color=colorRampPalette(c("white", "blue"))(101))
 
 ## Using custom references
+# Using datasets that were manually annotated previously to annotate a new dataset in an automated manner
+sce.muraro <- readRDS("OSCA_datasets/OSCA_Basics/sce.muraro_processed.rds")
 
+# Pruning out unknown or unclear labels.
+sce.muraro <- sce.muraro[,!is.na(sce.muraro$label) & 
+    sce.muraro$label!="unclear"]
+table(sce.muraro$label)
+
+# Assigning labels to our test dataset from Segerstolpe
 ```
 
 # OSCA Workflows
@@ -1921,4 +1929,196 @@ gridExtra::grid.arrange(
 # Save the processed sce.muraro object
 saveRDS(sce.muraro, "OSCA_datasets/OSCA_Basics/sce.muraro_processed.rds")
 ```
+
+## Segerstolpe human pancreas (Smart-seq2)
+
+```{r}
+## Data loading--------------------------------------------------------------------
+library(scRNAseq)
+# sce.seger <- SegerstolpePancreasData()
+# saveRDS(sce.seger, "OSCA_datasets/OSCA_Basics/sce.seger.rds")
+sce.seger <- readRDS("OSCA_datasets/OSCA_Basics/sce.seger.rds")
+
+# library(AnnotationHub)
+# edb <- AnnotationHub()[["AH73881"]]
+library(ensembldb)
+edb <- EnsDb("OSCA_datasets/OSCA_Workflows/EnsDb_Hsapiens_v97.sqlite")
+
+symbols <- rowData(sce.seger)$symbol
+ens.id <- mapIds(edb, keys=symbols, keytype="SYMBOL", column="GENEID")
+ens.id <- ifelse(is.na(ens.id), symbols, ens.id)
+
+# Removing duplicated rows.
+keep <- !duplicated(ens.id)
+sce.seger <- sce.seger[keep,]
+rownames(sce.seger) <- ens.id[keep]
+
+# Simplifying the names of some of the relevant column metadata fields
+emtab.meta <- colData(sce.seger)[,c("cell type", "disease",
+    "individual", "single cell well quality")]
+colnames(emtab.meta) <- c("CellType", "Disease", "Donor", "Quality")
+colData(sce.seger) <- emtab.meta
+
+sce.seger$CellType <- gsub(" cell", "", sce.seger$CellType)
+sce.seger$CellType <- paste0(
+    toupper(substr(sce.seger$CellType, 1, 1)),
+    substring(sce.seger$CellType, 2))
+
+## Quality control--------------------------------------------------------------------
+unfiltered <- sce.seger
+
+# Removing low quality cells marked by the authors
+# Also performing additional quality control to remove cells with very low counts and number of detected features
+# For batches that have a majority of low-quality cells, we use the other batches to define an appropritate threshold via subset
+low.qual <- sce.seger$Quality == "OK, filtered"
+
+library(scater)
+stats <- perCellQCMetrics(sce.seger)
+qc <- quickPerCellQC(stats, percent_subsets="altexps_ERCC_percent",
+    batch=sce.seger$Donor,
+    subset=!sce.seger$Donor %in% c("H6", "H5"))
+
+sce.seger <- sce.seger[,!(qc$discard | low.qual)]
+
+colData(unfiltered) <- cbind(colData(unfiltered), stats)
+unfiltered$discard <- qc$discard
+
+# Distribution of each QC metric across cells from each donor of the Segerstolpe pancreas dataset. Each point represents a cell and is colored according to whether that cell was discarded.
+gridExtra::grid.arrange(
+    plotColData(unfiltered, x="Donor", y="sum", colour_by="discard") +
+        scale_y_log10() + ggtitle("Total count") +
+        theme(axis.text.x = element_text(angle = 90)),
+    plotColData(unfiltered, x="Donor", y="detected", colour_by="discard") +
+        scale_y_log10() + ggtitle("Detected features") +
+        theme(axis.text.x = element_text(angle = 90)),
+    plotColData(unfiltered, x="Donor", y="altexps_ERCC_percent",
+        colour_by="discard") + ggtitle("ERCC percent") +
+        theme(axis.text.x = element_text(angle = 90)),
+    ncol=2
+)
+
+colSums(as.matrix(qc))
+
+## Normalization-------------------------------------------------------------------
+# We don’t normalize the spike-ins at this point as there are some cells with no spike-in counts.
+library(scran)
+clusters <- quickCluster(sce.seger)
+sce.seger <- computeSumFactors(sce.seger, clusters=clusters)
+sce.seger <- logNormCounts(sce.seger)
+
+summary(sizeFactors(sce.seger))
+
+# Relationship between the library size factors and the deconvolution size factors in the Segerstolpe pancreas dataset.
+plot(librarySizeFactors(sce.seger), sizeFactors(sce.seger), pch=16,
+    xlab="Library size factors", ylab="Deconvolution factors", log="xy")
+
+## Variance modelling----------------------------------------------------------------
+for.hvg <- sce.seger[,librarySizeFactors(altExp(sce.seger)) > 0 & sce.seger$Donor!="H1"]
+dec.seger <- modelGeneVarWithSpikes(for.hvg, "ERCC", block=for.hvg$Donor)
+chosen.hvgs <- getTopHVGs(dec.seger, n=2000)
+
+# Per-gene variance as a function of the mean for the log-expression values in the Grun pancreas dataset. Each point represents a gene (black) with the mean-variance trend (blue) fitted to the spike-in transcripts (red) separately for each donor.
+par(mfrow=c(3,3))
+blocked.stats <- dec.seger$per.block
+for (i in colnames(blocked.stats)) {
+    current <- blocked.stats[[i]]
+    plot(current$mean, current$total, main=i, pch=16, cex=0.5,
+        xlab="Mean of log-expression", ylab="Variance of log-expression")
+    curfit <- metadata(current)
+    points(curfit$mean, curfit$var, col="red", pch=16)
+    curve(curfit$trend(x), col='dodgerblue', add=TRUE, lwd=2)
+}
+
+## Dimensionality reduction----------------------------------------------------------------
+# We pick the first 25 PCs for downstream analysis
+library(BiocSingular)
+set.seed(101011001)
+sce.seger <- runPCA(sce.seger, subset_row=chosen.hvgs, ncomponents=25)
+sce.seger <- runTSNE(sce.seger, dimred="PCA")
+
+## Clustering---------------------------------------------------------------------
+library(bluster)
+clust.out <- clusterRows(reducedDim(sce.seger, "PCA"), NNGraphParam(), full=TRUE)
+snn.gr <- clust.out$objects$graph
+colLabels(sce.seger) <- clust.out$clusters
+
+# There is a strong donor effect. 
+# It might be due to differences in cell type composition between donors.
+# More appropriately, it can be technical difference in plate processing or uninteresting genotypic differences (which can be removed using fastMNN)
+tab <- table(Cluster=colLabels(sce.seger), Donor=sce.seger$Donor)
+library(pheatmap)
+# Heatmap of the frequency of cells from each donor in each cluster.
+pheatmap(log10(tab+10), color=viridis::viridis(100))
+
+# Each point represents a cell that is colored by cluster (left) or batch (right).
+gridExtra::grid.arrange(
+    plotTSNE(sce.seger, colour_by="label"),
+    plotTSNE(sce.seger, colour_by="Donor"),
+    ncol=2
+)
+
+## Data integration------------------------------------------------------------------
+# Repeating the clustering after running fastMNN() on the donors.
+# It yields a more coherent set of clusters where each cluster contains contributions from all donors.
+library(batchelor)
+
+set.seed(10001010)
+corrected <- fastMNN(sce.seger, batch=sce.seger$Donor, subset.row=chosen.hvgs)
+
+set.seed(10000001)
+corrected <- runTSNE(corrected, dimred="corrected")
+
+colLabels(corrected) <- clusterRows(reducedDim(corrected, "corrected"), NNGraphParam())
+
+tab <- table(Cluster=colLabels(corrected), Donor=corrected$batch)
+tab
+
+# t-SNE after batch correction across donors. Each point represents a cell and is colored by the assigned cluster identity.
+gridExtra::grid.arrange(
+    plotTSNE(corrected, colour_by="label"),
+    plotTSNE(corrected, colour_by="batch"),
+    ncol=2
+)
+
+## Multi-sample comparisons-------------------------------------------------------------
+# As the dataset contains both healthy donors and those with type II diabetes, it can be interesting to identify genes that are differentially expressed upon disease in each cell type
+# We'll use the author-provided annotation rather than determining the cell type for each of our clusters
+summed <- aggregateAcrossCells(sce.seger, 
+    ids=colData(sce.seger)[,c("Donor", "CellType")])
+summed
+
+# Using the voom pipeline from the limma package
+# It uses sample weights to better account for the variations in the precision of each pseudo-bulk profile
+summed.beta <- summed[,summed$CellType=="Beta"]
+
+library(edgeR)
+y.beta <- DGEList(counts(summed.beta), samples=colData(summed.beta),
+    genes=rowData(summed.beta)[,"symbol",drop=FALSE])
+y.beta <- y.beta[filterByExpr(y.beta, group=y.beta$samples$Disease),]
+y.beta <- calcNormFactors(y.beta)
+
+design <- model.matrix(~Disease, y.beta$samples)
+v.beta <- voomWithQualityWeights(y.beta, design)
+fit.beta <- lmFit(v.beta)
+fit.beta <- eBayes(fit.beta, robust=TRUE)
+
+res.beta <- topTable(fit.beta, sort.by="p", n=Inf,
+    coef="Diseasetype II diabetes mellitus")
+# Insulin is downregulated in beta cells in the disease state
+head(res.beta)
+
+# MA plot
+# MA plots for the beta cell pseudo-bulk profiles. Each MA plot is generated by comparing the corresponding pseudo-bulk profile against the average of all other profiles
+par(mfrow=c(5, 2))
+for (i in colnames(y.beta)) {
+    plotMD(y.beta, column=i)
+}
+# Easier to just re-run it with plot=TRUE than to try to make the plot from 'v.beta'.
+# Diagnostic plots for voom after estimating observation and quality weights from the beta cell pseudo-bulk profiles. The left plot shows the mean-variance trend used to estimate the observation weights, while the right plot shows the per-sample quality weights.
+voomWithQualityWeights(y.beta, design, plot=TRUE)
+
+# Save the processed dataset
+saveRDS(sce.seger, "OSCA_datasets/OSCA_Basics/sce.seger_processed.rds")
+```
+
 

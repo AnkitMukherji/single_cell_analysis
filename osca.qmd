@@ -1724,6 +1724,7 @@ saveRDS(sce.416b, "OSCA_datasets/OSCA_Basics/sce.416b_processed.rds")
 - Individual cells were isolated using the microfluidics system and library preparation was performed on each cell using a UMI-based protocol. After sequencing, expression was quantified by counting the number of unique molecular identifiers (UMIs) mapped to each gene.
 
 ```{r}
+## Data loading-------------------------------------------------------------------
 library(scRNAseq)
 # sce.zeisel <- ZeiselBrainData()
 sce.zeisel <- readRDS("OSCA_datasets/OSCA_Basics/sce.zeisel.rds")
@@ -1731,6 +1732,64 @@ sce.zeisel <- readRDS("OSCA_datasets/OSCA_Basics/sce.zeisel.rds")
 library(scater)
 sce.zeisel <- aggregateAcrossFeatures(sce.zeisel, 
     id=sub("_loc[0-9]+$", "", rownames(sce.zeisel)))
+
+# Fetching the Ensembl gene IDs
+library(org.Mm.eg.db)
+rowData(sce.zeisel)$Ensembl <- mapIds(org.Mm.eg.db, 
+    keys=rownames(sce.zeisel), keytype="SYMBOL", column="ENSEMBL")
+
+## Quality control-----------------------------------------------------------------
+unfiltered <- sce.zeisel
+
+stats <- perCellQCMetrics(sce.zeisel, subsets=list(
+    Mt=rowData(sce.zeisel)$featureType=="mito"))
+qc <- quickPerCellQC(stats, percent_subsets=c("altexps_ERCC_percent", 
+    "subsets_Mt_percent"))
+sce.zeisel <- sce.zeisel[,!qc$discard]
+
+colData(unfiltered) <- cbind(colData(unfiltered), stats)
+unfiltered$discard <- qc$discard
+
+# Distribution of each QC metric across cells in the Zeisel brain dataset. Each point represents a cell and is colored according to whether that cell was discarded.
+gridExtra::grid.arrange(
+    plotColData(unfiltered, y="sum", colour_by="discard") +
+        scale_y_log10() + ggtitle("Total count"),
+    plotColData(unfiltered, y="detected", colour_by="discard") +
+        scale_y_log10() + ggtitle("Detected features"),
+    plotColData(unfiltered, y="altexps_ERCC_percent",
+        colour_by="discard") + ggtitle("ERCC percent"),
+    plotColData(unfiltered, y="subsets_Mt_percent",
+        colour_by="discard") + ggtitle("Mito percent"),
+    ncol=2
+)
+
+# Percentage of mitochondrial reads in each cell in the Zeisel brain dataset, compared to the total count (left) or the percentage of spike-in reads (right). Each point represents a cell and is colored according to whether that cell was discarded.
+gridExtra::grid.arrange(
+    plotColData(unfiltered, x="sum", y="subsets_Mt_percent",
+        colour_by="discard") + scale_x_log10(),
+    plotColData(unfiltered, x="altexps_ERCC_percent", y="subsets_Mt_percent",
+        colour_by="discard"),
+    ncol=2
+)
+
+# Examining the number of cells removed for each reason
+colSums(as.matrix(qc))
+
+## Normalization------------------------------------------------------------------
+library(scran)
+set.seed(1000)
+clusters <- quickCluster(sce.zeisel)
+sce.zeisel <- computeSumFactors(sce.zeisel, cluster=clusters) 
+sce.zeisel <- logNormCounts(sce.zeisel)
+
+summary(sizeFactors(sce.zeisel))
+
+# Relationship between the library size factors and the deconvolution size factors in the Zeisel brain dataset.
+plot(librarySizeFactors(sce.zeisel), sizeFactors(sce.zeisel), pch=16,
+    xlab="Library size factors", ylab="Deconvolution factors", log="xy")
+
+## Variance modelling------------------------------------------------------------------
+
 ```
 
 ## Unfiltered human PBMC (10X Genomics)

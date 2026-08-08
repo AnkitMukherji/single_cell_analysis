@@ -1,13 +1,1 @@
-*
 
-!.gitignore
-!README.md
-!Dockerfile
-!single_cell.qmd
-!osca.qmd
-!.Rprofile
-!renv.lock
-!renv/
-!renv/**
-/.quarto/
-**/*.quarto_ipynb

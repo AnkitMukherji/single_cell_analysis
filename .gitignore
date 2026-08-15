@@ -1,6 +1,6 @@
 /*
 
-.DS_Store
+**/.DS_Store
 
 !bioconductorverse/
 
@@ -15,7 +15,6 @@ bioconductorverse/datasets
 bioconductorverse/html_render
 bioconductorverse/images
 bioconductorverse/rds_objects
-bioconductorverse/.DS_Store
 
 !scverse/
 

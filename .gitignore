@@ -15,6 +15,7 @@ bioconductorverse/datasets
 bioconductorverse/html_render
 bioconductorverse/images
 bioconductorverse/rds_objects
+bioconductorverse/.DS_Store
 
 !scverse/
 

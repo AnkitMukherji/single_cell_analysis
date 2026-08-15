@@ -1,1 +1,20 @@
+/*
 
+!bioconductorverse/
+
+!bioconductorverse/scripts/**
+!bioconductorverse/renv/activate.R
+!bioconductorverse/renv/settings.json
+
+bioconductorverse/renv/library/
+bioconductorverse/renv/staging/
+bioconductorverse/renv/cache/
+bioconductorverse/datasets
+bioconductorverse/html_render
+bioconductorverse/images
+bioconductorverse/rds_objects
+
+!scverse/
+
+__marimo__
+.venv/

@@ -18,5 +18,7 @@ bioconductorverse/rds_objects
 
 !scverse/
 
+scverse/images
+
 __marimo__
 .venv/

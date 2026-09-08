@@ -1,7 +1,7 @@
 import marimo
 
-__generated_with = "0.23.16"
-app = marimo.App(width="medium")
+__generated_with = "0.24.0"
+app = marimo.App(width="medium", auto_download=["html"])
 
 
 @app.cell
@@ -14,8 +14,16 @@ def _():
 @app.cell
 def _(mo):
     mo.vstack([
+        # Section 1: Transcript Quantification
         mo.md("# Transcript Quantification\n\n### Transcription takes place in stochastic bursts and leads to a total of 1,00,000 to 10,00,000 mRNA molecules in a typical mammalian cell"),
-        mo.image(src="images/quantifying_gene_expression.png", width=600)
+        mo.image(src="images/quantifying_gene_expression.png", width=600),
+    
+        mo.md("---"),
+    
+        # Section 2: Non-coding RNA
+        mo.md("# [Overview of non-coding RNA](https://www.bio-rad.com/de-de/applications-technologies/coding-non-coding-rna?ID=Q1070M70KWE7)"),
+        mo.image(src="images/ncRNA_Overview-Fig1a.jpg", width=600),
+        mo.image(src="images/ncRNA_Overview-Fig1b.jpg", width=600)
     ])
     return
 

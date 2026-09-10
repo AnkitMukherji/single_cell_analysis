@@ -11,6 +11,14 @@ def _():
     return (mo,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # ----------------Basics of Single-cell RNA sequencing----------------
+    """)
+    return
+
+
 @app.cell
 def _(mo):
     mo.vstack([
@@ -99,8 +107,11 @@ def _(mo):
     return
 
 
-@app.cell
-def _():
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # -----------------------Raw Data Processing-----------------------
+    """)
     return
 
 

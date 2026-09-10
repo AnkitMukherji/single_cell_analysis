@@ -17,9 +17,9 @@ def _(mo):
         # Section 1: Transcript Quantification
         mo.md("# Transcript Quantification\n\n### Transcription takes place in stochastic bursts and leads to a total of 1,00,000 to 10,00,000 mRNA molecules in a typical mammalian cell"),
         mo.image(src="images/quantifying_gene_expression.png", width=600),
-    
+
         mo.md("---"),
-    
+
         # Section 2: Non-coding RNA
         mo.md("# [Overview of non-coding RNA](https://www.bio-rad.com/de-de/applications-technologies/coding-non-coding-rna?ID=Q1070M70KWE7)"),
         mo.image(src="images/ncRNA_Overview-Fig1a.jpg", width=600),
@@ -31,7 +31,12 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    There are two major approaches:
+    # Why we need negative binomial to model gene transcription?
+    - Gene transcription occurs in stochastic bursts - short, irregular periods of activity during which a gene might suddenly produce multiple mRNA transcripts before returning to silence.
+    - Counting events over a fixed interval is a Poisson distribution, but a Poisson has a single parameter, which forces its variance to equal its mean.
+    - Negative binomial is ideal as it models event counts (mRNA) while capturing overdispersion (variance exceeding the mean) caused by transcriptional bursts.
+
+    # There are two major approaches for transcript quantification:
     - **Full-length**
         - Covers the whole transcript
         - Can be captured by *plate-based* protocols only

@@ -226,7 +226,72 @@ def _(mo):
     4. **Filtering based on a forced number of valid cells**
         - The simplest approach, although potentially problematic, is for the user to manually specify the number of valid barcodes.
 
+    After cell barcode (CB) correction, reads have either been discarded or assigned to a corrected CB. Subsequently, we wish to quantify the abundance of each gene within each corrected CB.
+
     # UMI Resolution
+
+    - Because of the amplification bias, reads must be deduplicated, based upon their UMI, to assess the true count of sampled molecules.
+    - The process of looking at the collection of observed UMIs and their associated mapped reads and attempting to infer the original number of observed molecules arising from each gene is known as UMI resolution.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.vstack([
+        mo.md("# Need for UMI Resolution"),
+        mo.md("UMIs reduce PCR amplification bias by tracking original molecules, but can be affected by different types of errors. Nucleotide substitutions in UMI tags may occur during amplification or sequencing. Multimapping can arise when reads sharing the same UMI are mapped to different genes, when a single read maps to multiple genes, or both."),
+        mo.image(src="images/UMI.png")
+    ])
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Other challenges in UMI resolution
+
+    - **Convergent collision:** The same UMI is used to tag two different pre-PCR molecules arising from the same gene, in the same cell.
+    - **Divergent collision:** Two or more distinct UMIs arise from the same pre-PCR molecule.
+
+    ## Graph-based UMI resolution
+
+    - A UMI graph G (V,E) is a directed graph with node set V and edge set E.
+    - Each node v (i) belongs to V and represents an equivalence class (EC) of reads. The edge set E encodes the relationship between the ECs.
+    - The equivalence relation is defined on reads based on their UMI and mapping information. Two reads are equivalent iff they have identical UMI tags and map to the same set of references.
+
+    ## Quantification
+
+    - The last step in UMI resolution is quantifying the abundance of each gene using the resolved UMI graph.
+    - Either multi-gene ECs are discarded or resolved using statistical inference procedures like Expectation-Maximization (EM) algorithm.
+
+    The UMI resolution and quantification process described above will be performed separately for each cell, represented by a corrected CB, to create a complete count matrix for all genes in all cells.
+
+    # Count matrix quality control
+
+    Includes:
+    - The total fraction of mapped reads
+    - The distribution of distinct UMIs observed per cell
+    - The distribution of UMI deduplication rates
+    - The distribution of detected genes per cell, etc
+
+    Tools to help organize and visualize these basic metrics:
+    - Loupe Browser
+    - alevinQC
+    - kb_python report
+
+    ## Empty droplet detection
+
+    - Certain barcodes are associated with ambient RNA instead of the RNA of a captured cell. This happens when droplets fail to capture a cell.
+    - These empty droplets still tend to produce sequenced reads, although the characteristics of these reads look markedly different from those associated with barcodes corresponding to properly captured cells.
+    - Can be resolved using a "knee" plot where the knee is a likely point of discrimination between properly captured cells and empty droplets. Drawbacks of this approach are:
+        - Not all cumulative histograms display an obvious knee, making it difficult for algorithms to robustly and automatically detect such knees.
+        - The total UMI count associated with a barcode may not alone be the best signal to determine if the barcode was associated with an empty or damaged cell.
+        - **Solution:** Assess different measures of cell quality including the frequency of distinct UMIs, the number of detected genes and the fraction of mitochondrial RNA.
+
+    ## Doublet Detection
+
+    When a given droplet captures two (doublets) or more (multiplets) cells, this can result in a skewed distribution for these cell barcodes in terms of quantities like the number of reads and UMIs they represent, as well as gene expression profiles they display.
     """)
     return
 

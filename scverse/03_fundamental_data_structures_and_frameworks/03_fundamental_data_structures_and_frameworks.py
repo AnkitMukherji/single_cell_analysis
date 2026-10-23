@@ -55,7 +55,7 @@ def _():
     ln.connect("theislab/sc-best-practices")
 
     # ln.track("zmuES9DakbmX")
-    return ad, csr_matrix, np, pd
+    return ad, csr_matrix, ln, np, pd
 
 
 @app.cell
@@ -237,7 +237,230 @@ def _(adata_2):
 
 
 @app.cell
+def _(adata_2):
+    # For a view, we can also set the first three elements of a column
+    print(adata_2[:3, "Gene_1"].X.toarray().tolist())
+    adata_2[:3, "Gene_1"].X = [0, 0, 0]
+    print(adata_2[:3, "Gene_1"].X.toarray().tolist())
+    return
+
+
+@app.cell
+def _(adata_2):
+    adata_subset = adata_2[:3, ["Gene_1", "Gene_2"]]
+    adata_subset
+    return (adata_subset,)
+
+
+@app.cell
+def _(adata_subset):
+    adata_subset.obs["foo"] = range(3)
+    adata_subset
+    return
+
+
+@app.cell
+def _(adata_2):
+    # Using pandas to slice with sequences or boolean indices
+    adata_2[adata_2.obs.time_yr.isin([2, 4])].obs.head()
+    return
+
+
+@app.cell
+def _(ad):
+    # Partial reading of large data
+    adata_partial = ad.read_h5ad("my_results.h5ad", backed="r")
+    return (adata_partial,)
+
+
+@app.cell
+def _(adata_partial):
+    adata_partial.isbacked
+    return
+
+
+@app.cell
+def _(adata_partial):
+    # The AnnData object has an open connection to the file used for reading
+    adata_partial.filename
+    return
+
+
+@app.cell
+def _(adata_partial):
+    # Always explicitly close the connection
+    adata_partial.file.close()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Scanpy API design
+
+    - All preprocessing functions are available in the **scanpy.preprocessing** module (**scanpy.pp**).
+    - All transformations of a data matrix that are not preprocessing are available in **scanpy.tools** (**scanpy.tl**).
+    - All visualizations are available in **scanpy.plot** (**scanpy.pl**).
+    - **scanpy.datasets** stores various datasets.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.vstack([
+        mo.md("# Scanpy API overview"),
+        mo.image("../images/scanpy_api.png")
+    ])
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Example workflow of an analysis using scanpy
+    """)
+    return
+
+
+@app.cell
 def _():
+    import scanpy as sc
+
+    sc.set_figure_params(dpi=80, facecolor="white")
+    sc.logging.print_header()
+    return (sc,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Dataset
+
+    2700 peripheral blood mononuclear cells of a healthy donor sequenced on the Illumina NextSeq 500
+    """)
+    return
+
+
+@app.cell
+def _(ln):
+    adata_example = ln.Artifact.get(
+        key="introduction/fundamental_data_structures_and_frameworks.h5ad", is_latest=True
+    ).load()
+    adata_example
+    return (adata_example,)
+
+
+@app.cell
+def _(adata_example):
+    # The var slow contains the gene IDs
+    adata_example.var
+    return
+
+
+@app.cell
+def _(adata_example, sc):
+    # Genes that yield the highest fraction of counts in each single cell, across all cells
+    sc.pl.highest_expr_genes(adata_example, n_top=20)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    *MALAT1* is the most expressed gene which is frequently detected in poly-A captured scRNA-Seq data, independent of protocol. This gene has been shown to have an inverse correlation with cell health. Especially dead/dying cells have a higher expression of *MALAT1*.
+    """)
+    return
+
+
+@app.cell
+def _(adata_example):
+    adata_example
+    return
+
+
+@app.cell
+def _(adata_example, sc):
+    # Filter cells with less than 200 detected genes
+    # Filter genes found in less than 3 cells
+    sc.pp.filter_cells(adata_example, min_genes=200)
+    sc.pp.filter_genes(adata_example, min_cells=3)
+    return
+
+
+@app.cell
+def _(adata_example):
+    adata_example
+    return
+
+
+@app.cell
+def _(adata_example, sc):
+    # PCA
+    sc.tl.pca(adata_example, svd_solver="arpack")
+    return
+
+
+@app.cell
+def _(adata_example):
+    adata_example
+    return
+
+
+@app.cell
+def _(adata_example, sc):
+    # Plotting a specific gene
+    sc.pl.pca(adata_example, color="CST3")
+    return
+
+
+@app.cell
+def _(adata_example, sc):
+    # Calculating neighborhood graph using PCA
+    # Used by other tools such as calculation of a UMAP
+    sc.pp.neighbors(adata_example, n_neighbors=10, n_pcs=40)
+    return
+
+
+@app.cell
+def _(adata_example):
+    adata_example
+    return
+
+
+@app.cell
+def _(adata_example, sc):
+    sc.tl.umap(adata_example)
+    return
+
+
+@app.cell
+def _(adata_example):
+    adata_example
+    return
+
+
+@app.cell
+def _(adata_example, sc):
+    sc.pl.umap(adata_example, color=["CST3", "NKG7", "PPBP"])
+    return
+
+
+@app.cell
+def _(adata_example):
+    adata_example
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Therefore,
+
+    ### The fundamental data structure for single-cell analysis in the scverse is **AnnData**.
+
+    ### The fundamental framework for single-cell analysis in the scverse is **Scanpy**.
+    """)
     return
 
 

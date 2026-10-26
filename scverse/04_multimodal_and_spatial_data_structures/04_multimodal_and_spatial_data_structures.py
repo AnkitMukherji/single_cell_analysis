@@ -6,6 +6,173 @@ app = marimo.App(width="medium", auto_download=["html"])
 
 @app.cell
 def _():
+    import marimo as mo
+
+    return (mo,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.vstack([
+        mo.md("# Multimodal and Spatial Data Structures"),
+        mo.image("../images/advanced_data_struct.png")
+    ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.vstack([
+        mo.md("# Using MuData to store multimodal data"),
+        mo.md("""
+        - MuData builds on top of AnnData to store and manipulate multimodal data.
+        - MuData object contains references to single AnnData objects of the unimodal data where each AnnData object is a dictionary stored in **.mod** (=modality) attribute
+            """),
+        mo.image("../images/mudata_overview.png")
+    ])
+    return
+
+
+@app.cell
+def _():
+    import lamindb as ln
+    import mudata as md
+    import numpy as np
+
+    ln.connect("theislab/sc-best-practices")
+    return ln, md
+
+
+@app.cell
+def _(ln):
+    adata = ln.Artifact.get(
+        key="introduction/advanced_data_structures_and_frameworks_mudata_1.h5ad",
+    ).load()
+    adata
+    return (adata,)
+
+
+@app.cell
+def _(ln):
+    adata2 = ln.Artifact.get(
+        key="introduction/advanced_data_structures_and_frameworks_mudata_2.h5ad",
+    ).load()
+    adata2
+    return (adata2,)
+
+
+@app.cell
+def _(adata, adata2, md):
+    # The two AnnData objects (two "modalities") can be wrapped into a single MuData object
+    # Naming modality one A and modality two B
+    mdata = md.MuData({"A": adata, "B": adata2})
+    return (mdata,)
+
+
+@app.cell
+def _(mdata):
+    # Observations with identical names in different modalities are considered to be the same observation
+    # This indicates that variable names should be unique
+    # Therefore, in mdata there are 1000 observations and 150 = 100 + 50 variables
+    mdata.shape
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## MuData attributes
+
+    ## .mod
+    """)
+    return
+
+
+@app.cell
+def _(mdata):
+    # Modalities are stored in a collection accessible via the .mod attribute of the MuData object with names of modalities as keys and AnnData objects as values
+    list(mdata.mod.keys())
+    return
+
+
+@app.cell
+def _(mdata):
+    # Accessing individual modalities
+    print(mdata.mod["A"])
+    print(mdata["A"])
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## .obs and .var
+
+    - Sample (cells) annotation is accessible via the **.obs** attribute and includes **.obs** data from individual modalities.
+    - Annotations of variables (features) are stored in **.var**.
+    - Observatons column from individual modalities contain modality name as their prefix e.g., rna:n_genes. This is also true for variables column.
+    - If there are columns with identical names in **.var** of multiple modalities, these columns are merged across modalities and no prefix is added. In such cases, when new columns are added or samples (cells) are filtered out, the changes have to be fetched with the **.update()** method.
+    """)
+    return
+
+
+@app.cell
+def _(mdata):
+    mdata.var_names
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    - Multidimensional annotations of sample (cells) are accessible in the **.obsm** attribute.
+    - If the shape of a modality is changed, **MuData.update()** has to be run to bring the respective updates to the MuData object.
+    """)
+    return
+
+
+@app.cell
+def _(adata2, mdata):
+    adata2.var_names = ["var_ad2_" + e.split("_")[1] for e in adata2.var_names]
+    print("Outdated variables names: ...,", ", ".join(mdata.var_names[-3:]))
+    mdata.update()
+    print("Updated variables names: ...,", ", ".join(mdata.var_names[-3:]))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    - Individual modalities are stored as references to the original objects. Hence, if the original AnnData object is changed the change will also be reflected in the MuData object
+    """)
+    return
+
+
+@app.cell
+def _(adata):
+    # Adding some unstructured data to the original object
+    adata.uns["misc"] = {"adata": True}
+    return
+
+
+@app.cell
+def _(mdata):
+    # Access modality A via the .mod attribute
+    mdata.mod["A"]
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Variable mappings
+    """)
+    return
+
+
+@app.cell
+def _(mdata):
+    mdata.obsm["A"]
     return
 
 

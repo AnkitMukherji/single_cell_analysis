@@ -83,7 +83,7 @@ def _(mo):
     mo.md(r"""
     ## MuData attributes
 
-    ## .mod
+    ### .mod
     """)
     return
 
@@ -106,7 +106,7 @@ def _(mdata):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## .obs and .var
+    ### .obs and .var
 
     - Sample (cells) annotation is accessible via the **.obs** attribute and includes **.obs** data from individual modalities.
     - Annotations of variables (features) are stored in **.var**.
@@ -242,8 +242,84 @@ def _(mdata_r):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # Multimodal methods
+    ## Multimodal methods
+
+    - For running multimodal methods such as dimensionality reduction, the most simple approach is to concatenate matrices from multiple modalities by horizontally stacking them.
+    - This is possible because the number of observations matches across modalities (the number of features per modality does not have to match).
     """)
+    return
+
+
+@app.cell
+def _(np):
+    # Running a PCA on a concatenated matrix
+    def simple_pca(mdata):
+        from sklearn import decomposition
+
+        x = np.hstack([m.X for m in mdata.mod.values()])
+
+        pca = decomposition.PCA(n_components=2)
+        components = pca.fit_transform(x)
+
+        # By default, methods operate in-place and embeddings are stored in the .obsm slot
+        mdata.obsm["X_pca"] = components
+
+    return (simple_pca,)
+
+
+@app.cell
+def _(mdata, simple_pca):
+    simple_pca(mdata)
+    print(mdata)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.vstack([
+        mo.md("""
+        # Multimodal data analysis with muon
+        - Analogous to Scanpy, general and multimodal functions are grouped in preprocessing (**muon.pp**), tools (**muon.tl**) and plots (**muon.pl**).
+        - Unimodal tools are available from the corresponding muon, which are again separated into preprocessing, tools and plots. For example, all ATAC preprocessing functions are grouped into **muon.atac.pp** while CITE-Seq preprocessing functions in **muon.prot.pp**.
+        """),
+        mo.image("../images/muon_api.png")
+    ])
+
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Demo analysis on 10x Genomics Multiome dataset for human PBMCs
+    """)
+    return
+
+
+@app.cell
+def _(ln):
+    import muon as mu
+
+    mdata_10x = ln.Artifact.get(
+        key="introduction/advanced_data_structures_and_frameworks_muon.h5mu", is_latest=True
+    ).load()
+
+    fragments = ln.Artifact.get(
+        key="introduction/advanced_data_structures_and_frameworks_atac_fragments.tsv.gz",
+        is_latest=True,
+    ).cache()
+
+    fragments_tbi = ln.Artifact.get(
+        key="introduction/advanced_data_structures_and_frameworks_atac_fragments.tsv.gz.tbi",
+        is_latest=True,
+    ).cache()
+    return (mdata_10x,)
+
+
+@app.cell
+def _(mdata_10x):
+    # Subsetting to the ATAC modality
+    atac = mdata_10x.mod["atac"]
     return
 
 

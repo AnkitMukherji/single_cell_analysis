@@ -40,7 +40,7 @@ def _():
     import numpy as np
 
     ln.connect("theislab/sc-best-practices")
-    return ln, md
+    return ln, md, np
 
 
 @app.cell
@@ -165,14 +165,85 @@ def _(mdata):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # Variable mappings
+    ## Variable mappings
     """)
     return
 
 
 @app.cell
 def _(mdata):
+    # Since all the observations are the same across modalities in mdata, all the values in the observations mappings are set to True
     mdata.obsm["A"]
+    return
+
+
+@app.cell
+def _(mdata, np):
+    np.sum(mdata.obsm["A"]) == np.sum(mdata.obsm["B"]) == 1000
+    return
+
+
+@app.cell
+def _(mdata):
+    # For variables, there are 150-long vectors where the A modality has 100 True values followed by 50 False values
+    mdata.varm["A"]
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## MuData views
+    """)
+    return
+
+
+@app.cell
+def _(mdata):
+    # Analogous to the behaviour of AnnData objects, slicing MuData objects returns views of the original data
+    view = mdata[:100, :1000]
+    print(view)
+    return (view,)
+
+
+@app.cell
+def _(view):
+    # Subsetting MuData objects slices them across modalities
+    # A copy of MuData object is not a view and has no dependence on the original object
+    mdata_sub = view.copy()
+    mdata_sub.is_view
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Reading and Writing of MuData objects
+    """)
+    return
+
+
+@app.cell
+def _(md, mdata):
+    # Similar to AnnData objects, MuData objects are also designed to be serialized into HDF5 based .h5mu files
+    mdata.write("my_mudata.h5mu")
+    mdata_r = md.read("my_mudata.h5mu", backed=True)
+    mdata_r
+    return (mdata_r,)
+
+
+@app.cell
+def _(mdata_r):
+    # Individual modalities are backed as well inside the .h5mu file
+    mdata_r["A"].isbacked
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Multimodal methods
+    """)
     return
 
 

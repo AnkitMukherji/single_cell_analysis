@@ -4,7 +4,8 @@ channels:
   - bioconda
 dependencies:
   - conda-forge::imagecodecs<2026,>=2025.8.2
-  - conda-forge::muon=0.1.7
+  - conda-forge::muon=0.2.0
+  - conda-forge::mudata=0.4.1
   - conda-forge::python=3.12.12
   - conda-forge::squidpy=1.8.1
   - conda-forge::scanpy=1.12

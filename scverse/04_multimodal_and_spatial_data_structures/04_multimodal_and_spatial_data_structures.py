@@ -284,7 +284,6 @@ def _(mo):
         """),
         mo.image("../images/muon_api.png")
     ])
-
     return
 
 
@@ -313,13 +312,200 @@ def _(ln):
         key="introduction/advanced_data_structures_and_frameworks_atac_fragments.tsv.gz.tbi",
         is_latest=True,
     ).cache()
-    return (mdata_10x,)
+
+    # MuData object with n_obs × n_vars = 11909 × 144978
+    #   var:	'gene_ids', 'feature_types', 'genome', 'interval'
+    #   2 modalities
+    #     rna:	11909 x 36601
+    #       var:	'gene_ids', 'feature_types', 'genome', 'interval'
+    #     atac:	11909 x 108377
+    #       var:	'gene_ids', 'feature_types', 'genome', 'interval'
+    #       uns:	'atac', 'files'
+    return fragments, mdata_10x, mu
 
 
 @app.cell
 def _(mdata_10x):
     # Subsetting to the ATAC modality
     atac = mdata_10x.mod["atac"]
+    return (atac,)
+
+
+@app.cell
+def _(atac):
+    # Filtering out cells with too few peaks and peaks detected in too few cells
+    import scanpy as sc
+
+    sc.pp.calculate_qc_metrics(atac, percent_top=None, log1p=False, inplace=True)
+    return (sc,)
+
+
+@app.cell
+def _(atac):
+    atac
+    return
+
+
+@app.cell
+def _(atac, sc):
+    sc.pl.violin(atac, ["total_counts", "n_genes_by_counts"], jitter=0.4, multi_panel=True)
+    return
+
+
+@app.cell
+def _(atac, mu):
+    # Filter peaks whose expression is not detected
+    mu.pp.filter_var(atac, "n_cells_by_counts", lambda x: x >= 10)
+    # This is analogous to sc.pp.filter_genes(rna, min_cells=10)
+    # but does in-place filtering and avoids copying the object
+    return
+
+
+@app.cell
+def _(mdata_10x):
+    mdata_10x.mod["atac"]
+    return
+
+
+@app.cell
+def _(atac):
+    atac
+    return
+
+
+@app.cell
+def _(atac, mu):
+    # Filtering cells
+    mu.pp.filter_obs(atac, "n_genes_by_counts", lambda x: (x >= 2000) & (x <= 15000))
+    # This is analogous to
+    # sc.pp.filter_cells(atac, max_genes=15000)
+    # sc.pp.filter_cells(atac, min_genes=2000)
+    # but does in-place filtering avoiding copying the object
+
+    mu.pp.filter_obs(atac, "total_counts", lambda x: (x >= 4000) & (x <= 40000))
+    return
+
+
+@app.cell
+def _(atac, sc):
+    sc.pl.violin(atac, ["n_genes_by_counts", "total_counts"], jitter=0.4, multi_panel=True)
+    return
+
+
+@app.cell
+def _(atac, mu):
+    # Same plots using Muon
+    mu.pl.histogram(atac, ["n_genes_by_counts", "total_counts"])
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## ATAC specific quality control with muon
+    """)
+    return
+
+
+@app.cell
+def _():
+    from muon import atac as ac
+
+    return (ac,)
+
+
+@app.cell
+def _(ac, atac, fragments, mdata_10x):
+    atac.obs["NS"] = 1
+    ac.tl.locate_fragments(mdata_10x, fragments=str(fragments))
+    ac.tl.locate_fragments(atac, fragments=str(fragments))
+    ac.tl.nucleosome_signal(atac, n=1e6)
+    ac.tl.get_gene_annotation_from_rna(mdata_10x["rna"]).head(3)
+    tss = ac.tl.tss_enrichment(mdata_10x, n_tss=1000)
+    ac.pl.tss_enrichment(tss)
+    return
+
+
+@app.cell
+def _(atac, sc):
+    # Save original counts, normalize data and select highly variable genes with scanpy
+    atac.layers["counts"] = atac.X
+    sc.pp.normalize_per_cell(atac, counts_per_cell_after=1e4)
+    sc.pp.log1p(atac)
+    sc.pp.highly_variable_genes(atac, min_mean=0.05, max_mean=1.5, min_disp=0.5)
+    atac.raw = atac
+    return
+
+
+@app.cell
+def _(atac):
+    atac
+    return
+
+
+@app.cell
+def _(ac, atac, sc):
+    # Athough PCA is used for ATAC data, latent semantic indexing (LSI) is another option
+    ac.tl.lsi(atac)
+    sc.pp.neighbors(atac, use_rep="X_lsi", n_neighbors=10, n_pcs=30)
+    sc.tl.leiden(atac, resolution=0.5)
+    sc.tl.umap(atac, spread=1.5, min_dist=0.5, random_state=20)
+    sc.pl.umap(atac, color=["leiden", "n_genes_by_counts"], legend_loc="on data")
+    return
+
+
+@app.cell
+def _(ac, atac):
+    # Gene specific UMAP
+    ac.pl.umap(atac, color=["KLF4"], average="peak_type")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Using SpatialData to store multimodal and spatial data
+    - Spatial omics measure molecular information (gene expression, chromatin accessibility, proteins) while preserving their physical locations inside a tissue.
+    - Single-cell methods lose spatial context during tissue dissociation, whereas spatial omics retains both molecular profiles and spatial positions of individual cells.
+    - The datasets combine images, coordinates and multiple molecular measurements making them large, complex and requiring specialized spatially aware data structures.
+
+    ## SpatialData object
+    - SpatialData is a container for various **Elements**. An **Element** is either a **SpatialElement** (Images, Labels, Points, Shapes) or a Table.
+        - **Images:** H&E, staining images
+        - **Labels:** pixel-level segmentation
+        - **Points:** transcripts locations with gene information, landmark points
+        - **Shapes:** cell/nucleus boundaries, subcellular structures, anatomical annotations, regions of interest (ROIs)
+        - **Tables:** sparse/dense matrices annotating the SpatialElements or storing arbitrary (non-spatial) metadata. They do not contain spatial coordinates.
+    - **SpatialElements** can be segregated into two broad types:
+        - **Rasters:** Data made up of pixels: including **Images** and **Labels**.
+        - **Vectors:** Data made up of points and lines. Polygons are also vectors, since they are simply a list of connected points. **Points** and **Shapes** are elements of this type.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.vstack([
+        mo.md("## Elements of a SpatialData object"),
+        mo.image("../images/SpacialData_elements.png")
+    ])
+    return
+
+
+@app.cell
+def _():
+    import spatialdata as sd
+    import spatialdata_plot  # noqa: F401
+
+    return
+
+
+@app.cell
+def _(ln):
+    sdata = ln.Artifact.get(
+        key="introduction/advanced_data_structures_and_frameworks_spatialdata.zarr"
+    ).load()
+    sdata
     return
 
 

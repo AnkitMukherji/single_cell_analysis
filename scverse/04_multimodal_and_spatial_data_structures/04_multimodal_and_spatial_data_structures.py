@@ -487,7 +487,7 @@ def _(mo):
 def _(mo):
     mo.vstack([
         mo.md("## Elements of a SpatialData object"),
-        mo.image("../images/SpacialData_elements.png")
+        mo.image("../images/SpatialData_elements.png")
     ])
     return
 
@@ -497,7 +497,7 @@ def _():
     import spatialdata as sd
     import spatialdata_plot  # noqa: F401
 
-    return
+    return (sd,)
 
 
 @app.cell
@@ -506,6 +506,64 @@ def _(ln):
         key="introduction/advanced_data_structures_and_frameworks_spatialdata.zarr"
     ).load()
     sdata
+    return (sdata,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## **Elements** of the **SpatialData** object and their representation
+    - **Images:** **xarray.DataArray** or **xarray.DataTree** objects respectively for single-scale or multi-scale images.
+    - **Labels:** **xarray.DataArray** or **xarray.DataTree** objects containing integer codes for different labels.
+    - **Points:** **dask.DataFrame** objects containing point coordinates, (lazy version of pandas.DataFrame objects).
+    - **Shapes:** **geopandas.GeoDataFrame** objects containing geometric objects like polygons.
+    - **Tables:** **anndata.AnnData** objects for tabular data with annotations.
+
+    Images can have multiple scales, which are stored in a pyramid for downsampled representations useful for more efficient visualization and analysis. We can access a single scale using the **get_pyramid_levels** function, where 0 is the highest resolution, 1 is downsampled by a factor of (usually 2), 2 is downsampled by another factor (usually 2, with respect to the previous scale).
+    """)
+    return
+
+
+@app.cell
+def _(sdata):
+    # The image has two scales
+    sdata["raw_image"]
+    return
+
+
+@app.cell
+def _(sd, sdata):
+    # Accessing the highest resolution image
+    sd.get_pyramid_levels(sdata["raw_image"], n=1)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    - To view image properties such as axes and channel names, **SpatialData** provides some helper functions.
+    - The axes **x** and **y** represent the two-dimensional plane of the image, while **c** corresponds to the different channels (e.g., wavelength) within the image.
+    """)
+    return
+
+
+@app.cell
+def _(sd, sdata):
+    sd.models.get_axes_names(sdata["raw_image"])
+    return
+
+
+@app.cell
+def _(sd, sdata):
+    # The image has one channel for DAPI staining (highlights nucleus)
+    sd.models.get_channel_names(sdata["raw_image"])
+    return
+
+
+@app.cell
+def _(sdata):
+    # Using spatialdata-plot to show the image (DAPI staining for nuclei)
+    sdata.pl.render_images("raw_image", cmap="gray").pl.show()
     return
 
 

@@ -567,6 +567,154 @@ def _(sdata):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Points
+    Uses lazy loading of the Dataframe to reduce memory usage. Thus, the information is only retrieved from the data file when it is needed and not all at once
+    """)
+    return
+
+
+@app.cell
+def _(sdata):
+    # For spatial transcriptomics datasets measuring single-molecules, coordinates are stored in columns x and y (optionally z for 3D) and have an additional column annotating gene identity.
+    sdata["transcripts"]
+    return
+
+
+@app.cell
+def _(sdata):
+    # We can easily convert the dask.DataFrame to a pandas.DataFrame using .compute()
+    # This will load the entire object into memory. If the data is large, the dask APIs can be used for the manipulation of the dataframe.
+    sdata["transcripts"].compute()
+    return
+
+
+@app.cell
+def _(sdata):
+    # When visualizing the points, the plotting backend automatically switches from matplotlib to datashader
+    sdata.pl.render_points("transcripts").pl.show()
+    return
+
+
+@app.cell
+def _(sdata):
+    # For plotting the transcripts coloured by gene, the groups argument can be used
+    sdata.pl.render_points(
+            elements="transcripts", color="gene", groups="Vwf", palette="red"
+        ).pl.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Shapes
+    """)
+    return
+
+
+@app.cell
+def _(sdata):
+    sdata["nucleus_boundaries"]
+    return
+
+
+@app.cell
+def _(sdata):
+    sdata.pl.render_shapes("nucleus_boundaries").pl.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Tables
+
+    For different spatial technologies:
+    - transcriptomics: transcript counts
+    - spatial proteomics: marker abundace
+    - slide-based assays: spot/grid abundances
+    """)
+    return
+
+
+@app.cell
+def _(sdata):
+    # Plotting numerical information on the cells (HAL gene expression)
+    sdata.pl.render_shapes("nucleus_boundaries", color="Hal").pl.show()
+
+    # Plotting categorical information of cell types
+    sdata.pl.render_shapes("nucleus_boundaries", color="annotation").pl.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Spatial omics data analysis with Squidpy
+
+    - Squidpy is a framework to analyze and visualize spatial omics data.
+    - Graph (**gr**) handles spatial relationships and interactions.
+    - Image (**im**) processes and segments tissue images.
+    - Tools (**tl**) provides spatial analysis, and plotting (**pl**) visualizes data and results.
+    - Reading (**read**) and datasets (**datasets**) support importing data and example datasets across technologies.
+    """)
+    return
+
+
+@app.cell
+def _():
+    import squidpy as sq
+    import matplotlib.pyplot as plt
+
+    return plt, sq
+
+
+@app.cell
+def _(ln):
+    # Loading a Xenium dataset
+    sdata_sp = ln.Artifact.get(
+        key="introduction/advanced_data_structures_and_frameworks_squidpy.zarr"
+    ).load()
+    sdata_sp
+    return (sdata_sp,)
+
+
+@app.cell
+def _(sdata_sp, sq):
+    # Computing a nearest neighbor graph of the spatial coordinates of the xenium dataset
+    sq.gr.spatial_neighbors(sdata_sp["table"])
+    return
+
+
+@app.cell
+def _(sc, sdata_sp):
+    # Clustering the cells based on gene expression profiles and computing clustering
+    sc.pp.pca(sdata_sp["table"])
+    sc.pp.neighbors(sdata_sp["table"])
+    sc.tl.leiden(sdata_sp["table"])
+    return
+
+
+@app.cell
+def _(plt, sdata_sp, sq):
+    # Neighbor enrichment analysis in Squidpy
+    sq.gr.nhood_enrichment(sdata_sp["table"], cluster_key="leiden")
+    sq.pl.nhood_enrichment(sdata_sp["table"], cluster_key="leiden", figsize=(5, 5))
+    plt.show()
+    return
+
+
+@app.cell
+def _(plt, sdata_sp, sq):
+    # Visualizing the results in spatial coordinates
+    sq.pl.spatial_scatter(sdata_sp["table"], shape=None, color="leiden")
+    plt.show()
+    return
+
+
 @app.cell
 def _():
     return

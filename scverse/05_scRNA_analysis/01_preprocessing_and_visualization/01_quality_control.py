@@ -54,7 +54,7 @@ def _():
 
     # Set figure parameters for clean, minimal plots
     sc.set_figure_params(dpi=80, facecolor="white", frameon=False)
-    return Literal, ad, ln, median_abs_deviation, np, pd, sc, sns
+    return Literal, ad, ln, logit, median_abs_deviation, np, pd, plt, sc, sns
 
 
 @app.cell
@@ -65,7 +65,7 @@ def _(ln):
     )
     adata = af.load()
     adata
-    return (adata,)
+    return adata, af
 
 
 @app.cell
@@ -183,11 +183,166 @@ def _(Literal, ad, median_abs_deviation, np, pd):
         lower, upper = mad_thresholds(values, nmads)
         return values > upper if side == "upper" else (values < lower) | (values > upper)
 
+    return is_outlier, mad_thresholds
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    - The bounded and skewed mitochondrial fraction is logit-transformed before computing MADs.
+    - A pseudocount keeps cells without mitochondrial counts finite.
+    """)
+    return
+
+
+@app.cell
+def _(adata, logit):
+    mt_fraction = (adata.obs["total_counts_mt"] + 1) / (adata.obs["total_counts"] + 2)
+    adata.obs["logit_mt_fraction"] = logit(mt_fraction)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    - Using 5 MADs for total_counts, n_genes_by_counts and pct_counts
+    - For mitochondrial fraction, flag cells that exceed both 3 MADs and a fixed cutoff of 8% which is not universal since mitochondrial content differs between cell types and tissues
+    """)
+    return
+
+
+@app.cell
+def _(adata, is_outlier):
+    qc_filters = {
+        "log1p_total_counts": (5, "both"),
+        "log1p_n_genes_by_counts": (5, "both"),
+        "pct_counts_in_top_20_genes": (5, "both"),
+        "logit_mt_fraction":(3, "upper"),
+    }
+
+    flags = {
+        metric: is_outlier(adata, metric, nmads, side)
+        for metric, (nmads, side) in qc_filters.items()
+    }
+    adata.obs["outlier"] = (
+        flags["log1p_total_counts"]
+        | flags["log1p_n_genes_by_counts"]
+        | flags["pct_counts_in_top_20_genes"]
+    )
+    adata.obs["mt_outlier"] = flags["logit_mt_fraction"] & (adata.obs["pct_counts_mt"] > 8)
+    adata.obs[["outlier", "mt_outlier"]].value_counts()
+    return flags, qc_filters
+
+
+@app.cell
+def _(flags):
+    flags
+    return
+
+
+@app.cell
+def _(adata, logit, mad_thresholds, plt, qc_filters, sns):
+    # Plotting the thresholds
+    fig, axes = plt.subplots(1, len(qc_filters), figsize=(16, 3.5))
+
+    for ax, (metric, (nmads, side)) in zip(axes, qc_filters.items(), strict=True):
+        sns.histplot(adata.obs[metric], bins=100, ax=ax)
+        lower, upper = mad_thresholds(adata.obs[metric], nmads)
+        for threshold in [upper] if side == "upper" else [lower, upper]:
+            ax.axvline(threshold, color="red")
+    axes[-1].axvline(logit(0.08), color="red", linestyle="--") # 8 % cutoff
+    plt.tight_layout()
+    plt.show()
+    return
+
+
+@app.cell
+def _(adata):
+    # Filtering the AnnData object
+    print(f"Total number of cells: {adata.n_obs}")
+    adata_filtered = adata[(~adata.obs.outlier) & (~adata.obs.mt_outlier)].copy()
+
+    print(f"Number of cells after filtering of low quality cells: {adata_filtered.n_obs}")
+    return (adata_filtered,)
+
+
+@app.cell
+def _(adata_filtered, sc):
+    pl = sc.pl.scatter(adata_filtered, "total_counts", "n_genes_by_counts", color="pct_counts_mt")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Correction of ambient RNA
+    - Only applies to **droplet-based protocols**.
+    - A certain amount of background mRNAs (cell-free mRNAs) is present in the dilution that gets distributed into the droplets with cells and sequenced along with them.
+    - Methods for removal of ambient mRNA like **SoupX** and **DecontX** aim to estimate the composition of the soup (term for contamination of cell-free mRNA in the input solution) and correct the count table with respect to the soup-based expression.
+
+    N.B.: SoupX works better if a basic clustering is provided.
+    """)
+    return
+
+
+@app.cell
+def _(adata_filtered, sc):
+    # Normalize and lop1p transform the data
+    adata_pp = adata_filtered.copy()
+    sc.pp.normalize_total(adata_pp, target_sum=1e4)
+    sc.pp.log1p(adata_pp)
+    return (adata_pp,)
+
+
+@app.cell
+def _(adata_filtered, adata_pp, sc):
+    # Computing the principal components of the data
+    # which in turn is used to generate a neighborhood graph
+    # and then run leiden clustering on the KNN-graph
+    sc.pp.pca(adata_pp)
+    sc.pp.neighbors(adata_pp)
+    sc.tl.leiden(
+        adata_pp, key_added="soupx_groups", flavor="igraph", n_iterations=2, directed=False
+    )
+
+    # Preprocess variables for SoupX
+    adata_filtered.obs["soupx_groups"] = adata_pp.obs["soupx_groups"]
+    return
+
+
+@app.cell
+def _(adata_filtered):
+    adata_filtered
+    return
+
+
+@app.cell
+def _(adata_filtered):
+    cells = adata_filtered.obs_names
+    genes = adata_filtered.var_names
+
+    # SoupX requires a matrix of shape features x barcodes, so we have to transpose .X
+    data = adata_filtered.X.T
+    return
+
+
+@app.cell
+def _(af):
+    # SoupX also requires the raw gene by cells matrix typically called raw_feature_bc_matrix.h5 in the cellranger output
+    adata_raw = af.load()
+    adata_raw.var_names_make_unique()
+
+    genes_raw = adata_raw.var_names
+    cells_raw = adata_raw.obs_names
+
+    data_tod = adata_raw.X.T
     return
 
 
 @app.cell
 def _():
+    # Converting the data into the right structure to be used in R
+
     return
 
 

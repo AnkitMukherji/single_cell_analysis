@@ -715,10 +715,5 @@ def _(plt, sdata_sp, sq):
     return
 
 
-@app.cell
-def _():
-    return
-
-
 if __name__ == "__main__":
     app.run()

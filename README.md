@@ -2,6 +2,11 @@
 
 A practical collection of single-cell analysis scripts, notebooks, and Quarto notes spanning **scverse** and **Bioconductor**.
 
+## Folder guides
+
+- [bioconductorverse](bioconductorverse/README.md)
+- [Single-cell analysis in Python](scverse/README.md)
+
 ## Analysis pathway
 
 | Area | Material |
